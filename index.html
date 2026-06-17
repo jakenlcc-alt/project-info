@@ -347,9 +347,9 @@
 
     // Cloudflare Worker that proxies to the monday.com GraphQL API (injects the token).
     const SUBMIT_URL = "https://monday-token-keeper.jake-nlcc.workers.dev";
-    // monday.com board ID for kickoff items — the number in the board URL:
-    //   https://<account>.monday.com/boards/XXXXXXXXX   <-- that XXXXXXXXX
-    const BOARD_ID = "";
+    // Existing monday board cloned for each new project (the template).
+    // Number from the board URL: https://<account>.monday.com/boards/XXXXXXXXX
+    const TEMPLATE_BOARD_ID = "18405661261";
 
     // Readable summary of the checklist, posted to the item's Updates feed.
     function buildSummary(d) {
@@ -386,6 +386,19 @@
       ].join("\n");
     }
 
+    // Contact block for the board's "Contact Information" column.
+    function buildContactInfo(d) {
+      const c = d.contacts;
+      const line = (label, x) => label + " — Phone: " + (x.phone || "—") + ", Email: " + (x.email || "—");
+      return [
+        "Builder: " + (d.overview.builder || "—"),
+        "Builder POC: " + (d.overview.builderPoc || "—"),
+        line("Superintendent", c.superintendent),
+        line("Project Manager", c.projectManager),
+        line("Accounting", c.accounting)
+      ].join("\n");
+    }
+
     // Send a GraphQL request to monday via the Worker; throw on monday errors.
     async function mondayQuery(query, variables) {
       const res = await fetch(SUBMIT_URL, {
@@ -399,40 +412,73 @@
       return json.data;
     }
 
+    // Create a long-text column on the board and set its value on the given item.
+    async function addTextColumn(boardId, itemId, title, value) {
+      const col = await mondayQuery(
+        "mutation ($boardId: ID!, $title: String!) {" +
+        "  create_column (board_id: $boardId, title: $title, column_type: long_text) { id }" +
+        "}",
+        { boardId: String(boardId), title: title }
+      );
+      const colId = col.create_column.id;
+      await mondayQuery(
+        "mutation ($boardId: ID!, $itemId: ID!, $colId: String!, $val: String!) {" +
+        "  change_simple_column_value (board_id: $boardId, item_id: $itemId, column_id: $colId, value: $val) { id }" +
+        "}",
+        { boardId: String(boardId), itemId: String(itemId), colId: colId, val: value }
+      );
+    }
+
     document.getElementById("kickoff").addEventListener("submit", async (e) => {
       e.preventDefault();
       const status = document.getElementById("status");
       const out = document.getElementById("output");
       const data = collect();
 
-      if (!SUBMIT_URL || !BOARD_ID) {
+      if (!SUBMIT_URL || !TEMPLATE_BOARD_ID) {
         out.style.display = "block";
         out.textContent = JSON.stringify(data, null, 2);
-        status.textContent = "BOARD_ID not set — showing data below. Add the monday board ID to enable submitting.";
+        status.textContent = "TEMPLATE_BOARD_ID not set — showing data below.";
         return;
       }
       if (!data.overview.project) { status.textContent = "Enter a Project name first."; return; }
 
-      status.textContent = "Submitting to monday…";
+      status.textContent = "Creating board in monday…";
       try {
-        // 1) Create the item, named after the project.
-        const created = await mondayQuery(
-          "mutation ($boardId: ID!, $itemName: String!) {" +
-          "  create_item (board_id: $boardId, item_name: $itemName) { id }" +
+        // 1) Duplicate the template board → a fresh board for this project.
+        const dup = await mondayQuery(
+          "mutation ($boardId: ID!, $name: String!) {" +
+          "  duplicate_board (board_id: $boardId, duplicate_type: duplicate_board_with_structure_and_items, board_name: $name) {" +
+          "    board { id }" +
+          "  }" +
           "}",
-          { boardId: String(BOARD_ID), itemName: "Kickoff – " + data.overview.project }
+          { boardId: String(TEMPLATE_BOARD_ID), name: data.overview.project }
+        );
+        const newBoardId = dup.duplicate_board.board.id;
+
+        // 2) Create the Project Info item on the new board.
+        const created = await mondayQuery(
+          "mutation ($boardId: ID!, $itemName: String!) { create_item (board_id: $boardId, item_name: $itemName) { id } }",
+          { boardId: String(newBoardId), itemName: "Project Info – " + data.overview.project }
         );
         const itemId = created.create_item.id;
 
-        // 2) Post the full filled-out checklist to the item's Updates feed.
+        // 3) Post the full checklist to the item's Updates feed (guaranteed capture).
         await mondayQuery(
-          "mutation ($itemId: ID!, $body: String!) {" +
-          "  create_update (item_id: $itemId, body: $body) { id }" +
-          "}",
+          "mutation ($itemId: ID!, $body: String!) { create_update (item_id: $itemId, body: $body) { id } }",
           { itemId: String(itemId), body: buildSummary(data) }
         );
 
-        status.textContent = "Created monday item #" + itemId + " ✓";
+        // 4) Best-effort: add "Contact Information" and "Kick Off" columns and populate them.
+        let note = "";
+        try {
+          await addTextColumn(newBoardId, itemId, "Contact Information", buildContactInfo(data));
+          await addTextColumn(newBoardId, itemId, "Kick Off", buildSummary(data));
+        } catch (colErr) {
+          note = " — note: column step failed (" + colErr.message + ")";
+        }
+
+        status.textContent = 'Created board "' + data.overview.project + '" (item #' + itemId + ") ✓" + note;
       } catch (err) {
         status.textContent = "Error: " + err.message;
         out.style.display = "block";
