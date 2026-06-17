@@ -70,18 +70,18 @@
     textarea { resize: vertical; min-height: 72px; }
 
     .row2 { display: grid; gap: 1rem 1.25rem; grid-template-columns: 1fr 1fr; }
-    .subfield { margin-top: 0.25rem; margin-left: 1.25rem; padding-left: 0.9rem; border-left: 2px solid var(--line); }
 
     /* Contact role groups */
     .contact-role { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.55rem; color: var(--accent); }
     .contact-group + .contact-group { margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
 
-    /* Completed / Not Complete status rows */
+    /* Completed / Not Complete status rows with file upload */
     .statuslist { display: flex; flex-direction: column; gap: 0.6rem; }
     .status-row {
-      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
-      padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd;
+      display: flex; flex-direction: column; gap: 0.55rem;
+      padding: 0.6rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd;
     }
+    .status-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
     .status-name { font-weight: 500; flex: 1 1 150px; }
     .status-btns { display: flex; gap: 0.4rem; flex: none; }
     .status-btn {
@@ -94,6 +94,7 @@
     .status-btn.not:hover  { border-color: var(--red); }
     .status-btn.done.active { background: var(--green); border-color: var(--green); color: #fff; }
     .status-btn.not.active  { background: var(--red);   border-color: var(--red);   color: #fff; }
+    .status-file { font-size: 0.8rem; color: var(--muted); max-width: 100%; }
 
     .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.25rem; }
     button.action { font: inherit; font-weight: 600; cursor: pointer; padding: 0.7rem 1.4rem; border-radius: 8px; border: 1px solid transparent; }
@@ -118,31 +119,14 @@
 
     <form id="kickoff">
       <fieldset class="card">
-        <h2 class="card-title">Overview</h2>
-        <div class="row2">
+        <h2 class="card-title">Contact Information</h2>
+        <div class="contact-group">
+          <div class="contact-role">Builder POC</div>
           <div class="field">
-            <label for="project">Project</label>
-            <input type="text" id="project" name="project" />
-          </div>
-          <div class="field">
-            <label for="projectId">Project ID #</label>
-            <input type="text" id="projectId" name="projectId" />
-          </div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label for="builder">Builder</label>
-            <input type="text" id="builder" name="builder" />
-          </div>
-          <div class="field">
-            <label for="builderPoc">Builder POC info <span class="hint">(name / phone / email)</span></label>
+            <label for="builderPoc">Name / phone / email</label>
             <input type="text" id="builderPoc" name="builderPoc" />
           </div>
         </div>
-      </fieldset>
-
-      <fieldset class="card">
-        <h2 class="card-title">Contacts</h2>
         <div class="contact-group">
           <div class="contact-role">Superintendent</div>
           <div class="row2">
@@ -185,6 +169,24 @@
       </fieldset>
 
       <fieldset class="card">
+        <h2 class="card-title">Overview</h2>
+        <div class="row2">
+          <div class="field">
+            <label for="project">Project</label>
+            <input type="text" id="project" name="project" />
+          </div>
+          <div class="field">
+            <label for="projectId">Project ID #</label>
+            <input type="text" id="projectId" name="projectId" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="builder">Builder</label>
+          <input type="text" id="builder" name="builder" />
+        </div>
+      </fieldset>
+
+      <fieldset class="card">
         <h2 class="card-title">Time Schedule</h2>
         <div class="row2">
           <div class="field">
@@ -212,7 +214,7 @@
           <label for="materialOrdering">Material ordering</label>
           <input type="text" id="materialOrdering" name="materialOrdering" />
         </div>
-        <div class="field subfield">
+        <div class="field">
           <label for="suppliers">What supplier(s)?</label>
           <input type="text" id="suppliers" name="suppliers" />
         </div>
@@ -232,6 +234,7 @@
 
       <fieldset class="card">
         <h2 class="card-title">Additional Office Binder Needs</h2>
+        <p class="hint" style="margin:-0.4rem 0 1rem;">Mark each item and attach the document if you have it.</p>
         <div class="statuslist" id="binderChecks"></div>
       </fieldset>
 
@@ -272,16 +275,19 @@
     ];
     const OTHER_ITEMS = ["Safety Plan Binder"];
 
-    // Render each item as a row with Completed (green) / Not Complete (red) toggle buttons.
+    // Render each item: name + Completed (green) / Not Complete (red) toggle + file upload.
     function renderStatusList(containerId, items, group) {
       const el = document.getElementById(containerId);
       el.innerHTML = items.map((item) =>
         '<div class="status-row" data-group="' + group + '" data-item="' + encodeURIComponent(item) + '" data-status="">' +
-          '<span class="status-name">' + item + '</span>' +
-          '<div class="status-btns">' +
-            '<button type="button" class="status-btn done" data-state="completed">Completed</button>' +
-            '<button type="button" class="status-btn not" data-state="not_complete">Not Complete</button>' +
+          '<div class="status-head">' +
+            '<span class="status-name">' + item + '</span>' +
+            '<div class="status-btns">' +
+              '<button type="button" class="status-btn done" data-state="completed">Completed</button>' +
+              '<button type="button" class="status-btn not" data-state="not_complete">Not Complete</button>' +
+            '</div>' +
           '</div>' +
+          '<input type="file" class="status-file" multiple aria-label="Attach files for ' + item + '" />' +
         '</div>'
       ).join("");
       el.addEventListener("click", (e) => {
@@ -302,23 +308,37 @@
     renderStatusList("otherChecks", OTHER_ITEMS, "other");
 
     function collectStatus(group) {
-      return [...document.querySelectorAll('.status-row[data-group="' + group + '"]')]
-        .map(r => ({ item: decodeURIComponent(r.dataset.item), status: r.dataset.status || "" }));
+      return [...document.querySelectorAll('.status-row[data-group="' + group + '"]')].map(r => {
+        const input = r.querySelector(".status-file");
+        const files = input ? [...input.files].map(f => f.name) : [];
+        return { item: decodeURIComponent(r.dataset.item), status: r.dataset.status || "", files };
+      });
+    }
+
+    // All File objects attached across the binder/other lists (for upload at submit).
+    function collectFiles() {
+      const out = [];
+      document.querySelectorAll(".status-row").forEach(r => {
+        const item = decodeURIComponent(r.dataset.item);
+        const input = r.querySelector(".status-file");
+        if (input) for (const f of input.files) out.push({ item, file: f });
+      });
+      return out;
     }
 
     function collect() {
       const f = document.getElementById("kickoff");
       return {
-        overview: {
-          project: f.project.value.trim(),
-          projectId: f.projectId.value.trim(),
-          builder: f.builder.value.trim(),
-          builderPoc: f.builderPoc.value.trim()
-        },
         contacts: {
+          builderPoc: f.builderPoc.value.trim(),
           superintendent: { phone: f.superPhone.value.trim(), email: f.superEmail.value.trim() },
           projectManager: { phone: f.pmPhone.value.trim(), email: f.pmEmail.value.trim() },
           accounting: { phone: f.acctPhone.value.trim(), email: f.acctEmail.value.trim() }
+        },
+        overview: {
+          project: f.project.value.trim(),
+          projectId: f.projectId.value.trim(),
+          builder: f.builder.value.trim()
         },
         timeSchedule: {
           estimatedStartDate: f.startDate.value,
@@ -355,19 +375,22 @@
     function buildSummary(d) {
       const c = d.contacts;
       const statusLabel = (s) => s === "completed" ? "Completed" : s === "not_complete" ? "Not complete" : "—";
-      const statusList = (arr) => arr.length ? arr.map(x => "• " + x.item + ": " + statusLabel(x.status)).join("\n") : "—";
+      const statusList = (arr) => arr.length ? arr.map(x => {
+        const files = (x.files && x.files.length) ? "  [files: " + x.files.join(", ") + "]" : "";
+        return "• " + x.item + ": " + statusLabel(x.status) + files;
+      }).join("\n") : "—";
       const contact = (x) => "Phone: " + (x.phone || "—") + " | Email: " + (x.email || "—");
       return [
         "KICKOFF CHECKLIST", "",
-        "Overview",
-        "Project: " + (d.overview.project || "—"),
-        "Project ID #: " + (d.overview.projectId || "—"),
-        "Builder: " + (d.overview.builder || "—"),
-        "Builder POC: " + (d.overview.builderPoc || "—"), "",
-        "Contacts",
+        "Contact Information",
+        "Builder POC: " + (c.builderPoc || "—"),
         "Superintendent — " + contact(c.superintendent),
         "Project Manager — " + contact(c.projectManager),
         "Accounting — " + contact(c.accounting), "",
+        "Overview",
+        "Project: " + (d.overview.project || "—"),
+        "Project ID #: " + (d.overview.projectId || "—"),
+        "Builder: " + (d.overview.builder || "—"), "",
         "Time Schedule",
         "Estimated Start Date: " + (d.timeSchedule.estimatedStartDate || "—"),
         "Estimated Duration: " + (d.timeSchedule.estimatedDuration || "—"), "",
@@ -391,8 +414,7 @@
       const c = d.contacts;
       const line = (label, x) => label + " — Phone: " + (x.phone || "—") + ", Email: " + (x.email || "—");
       return [
-        "Builder: " + (d.overview.builder || "—"),
-        "Builder POC: " + (d.overview.builderPoc || "—"),
+        "Builder POC: " + (c.builderPoc || "—"),
         line("Superintendent", c.superintendent),
         line("Project Manager", c.projectManager),
         line("Accounting", c.accounting)
@@ -427,6 +449,23 @@
         "}",
         { boardId: String(boardId), itemId: String(itemId), colId: colId, val: value }
       );
+    }
+
+    // Upload File objects to a file column on the item (multipart, via the Worker).
+    async function uploadFiles(boardId, itemId, files) {
+      const colId = (await mondayQuery(
+        'mutation ($boardId: ID!) { create_column (board_id: $boardId, title: "Documents", column_type: file) { id } }',
+        { boardId: String(boardId) }
+      )).create_column.id;
+      for (const { file } of files) {
+        const form = new FormData();
+        form.append("query",
+          'mutation ($file: File!) { add_file_to_column (item_id: ' + itemId + ', column_id: "' + colId + '", file: $file) { id } }');
+        form.append("variables[file]", file, file.name);
+        const res = await fetch(SUBMIT_URL, { method: "POST", body: form });
+        const json = await res.json();
+        if (json.errors) throw new Error(json.errors.map(e => e.message).join("; "));
+      }
     }
 
     document.getElementById("kickoff").addEventListener("submit", async (e) => {
@@ -469,13 +508,15 @@
           { itemId: String(itemId), body: buildSummary(data) }
         );
 
-        // 4) Best-effort: add "Contact Information" and "Kick Off" columns and populate them.
+        // 4) Best-effort: Contact Information + Kick Off columns, and uploaded documents.
         let note = "";
         try {
           await addTextColumn(newBoardId, itemId, "Contact Information", buildContactInfo(data));
           await addTextColumn(newBoardId, itemId, "Kick Off", buildSummary(data));
-        } catch (colErr) {
-          note = " — note: column step failed (" + colErr.message + ")";
+          const files = collectFiles();
+          if (files.length) await uploadFiles(newBoardId, itemId, files);
+        } catch (extraErr) {
+          note = " — note: a column/upload step failed (" + extraErr.message + ")";
         }
 
         status.textContent = 'Created board "' + data.overview.project + '" (item #' + itemId + ") ✓" + note;
