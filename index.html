@@ -14,6 +14,12 @@
       --line: #dce3ea;
       --accent: #1f6feb;
       --accent-ink: #ffffff;
+      --green: #18a957;
+      --green-line: #9bd8b8;
+      --green-ink: #18794e;
+      --red: #e5484d;
+      --red-line: #f1a9a0;
+      --red-ink: #b42318;
     }
     * { box-sizing: border-box; }
     body {
@@ -66,16 +72,27 @@
     .row2 { display: grid; gap: 1rem 1.25rem; grid-template-columns: 1fr 1fr; }
     .subfield { margin-top: 0.25rem; margin-left: 1.25rem; padding-left: 0.9rem; border-left: 2px solid var(--line); }
 
-    .checks { display: grid; gap: 0.6rem 1.25rem; grid-template-columns: 1fr 1fr; }
-    .check {
-      display: flex; align-items: center; gap: 0.6rem;
-      padding: 0.6rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd;
+    /* Completed / Not Complete status rows */
+    .statuslist { display: flex; flex-direction: column; gap: 0.6rem; }
+    .status-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+      padding: 0.55rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd;
     }
-    .check input { width: 1.05rem; height: 1.05rem; margin: 0; accent-color: var(--accent); flex: none; }
-    .check label { margin: 0; font-weight: 500; }
+    .status-name { font-weight: 500; flex: 1 1 150px; }
+    .status-btns { display: flex; gap: 0.4rem; flex: none; }
+    .status-btn {
+      font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer;
+      padding: 0.38rem 0.85rem; border-radius: 6px; border: 1px solid; background: #fff;
+    }
+    .status-btn.done { color: var(--green-ink); border-color: var(--green-line); }
+    .status-btn.not  { color: var(--red-ink);   border-color: var(--red-line); }
+    .status-btn.done:hover { border-color: var(--green); }
+    .status-btn.not:hover  { border-color: var(--red); }
+    .status-btn.done.active { background: var(--green); border-color: var(--green); color: #fff; }
+    .status-btn.not.active  { background: var(--red);   border-color: var(--red);   color: #fff; }
 
     .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.25rem; }
-    button { font: inherit; font-weight: 600; cursor: pointer; padding: 0.7rem 1.4rem; border-radius: 8px; border: 1px solid transparent; }
+    button.action { font: inherit; font-weight: 600; cursor: pointer; padding: 0.7rem 1.4rem; border-radius: 8px; border: 1px solid transparent; }
     button.primary { background: var(--accent); color: var(--accent-ink); }
     button.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
     #status { font-size: 0.9rem; color: var(--muted); }
@@ -83,7 +100,7 @@
 
     @media (max-width: 640px) {
       body { padding: 1.25rem 0.85rem 3rem; }
-      .row2, .checks { grid-template-columns: 1fr; }
+      .row2 { grid-template-columns: 1fr; }
       .card { padding: 1.1rem 1.1rem 1.25rem; }
     }
   </style>
@@ -162,12 +179,12 @@
 
       <fieldset class="card">
         <h2 class="card-title">Additional Office Binder Needs</h2>
-        <div class="checks" id="binderChecks"></div>
+        <div class="statuslist" id="binderChecks"></div>
       </fieldset>
 
       <fieldset class="card">
         <h2 class="card-title">Other &ndash; Binders</h2>
-        <div class="checks" id="otherChecks"></div>
+        <div class="statuslist" id="otherChecks"></div>
       </fieldset>
 
       <fieldset class="card">
@@ -185,8 +202,8 @@
       </fieldset>
 
       <div class="actions">
-        <button type="submit" class="primary">Submit</button>
-        <button type="button" class="secondary" id="previewBtn">Preview data</button>
+        <button type="submit" class="action primary">Submit</button>
+        <button type="button" class="action secondary" id="previewBtn">Preview data</button>
         <span id="status"></span>
       </div>
       <pre id="output"></pre>
@@ -202,18 +219,39 @@
     ];
     const OTHER_ITEMS = ["Safety Plan Binder"];
 
-    function renderChecks(containerId, items, group) {
+    // Render each item as a row with Completed (green) / Not Complete (red) toggle buttons.
+    function renderStatusList(containerId, items, group) {
       const el = document.getElementById(containerId);
-      el.innerHTML = items.map((item, i) => {
-        const id = group + "_" + i;
-        return '<div class="check">' +
-          '<input type="checkbox" id="' + id + '" data-group="' + group + '" value="' + item + '" />' +
-          '<label for="' + id + '">' + item + '</label>' +
-        '</div>';
-      }).join("");
+      el.innerHTML = items.map((item) =>
+        '<div class="status-row" data-group="' + group + '" data-item="' + encodeURIComponent(item) + '" data-status="">' +
+          '<span class="status-name">' + item + '</span>' +
+          '<div class="status-btns">' +
+            '<button type="button" class="status-btn done" data-state="completed">Completed</button>' +
+            '<button type="button" class="status-btn not" data-state="not_complete">Not Complete</button>' +
+          '</div>' +
+        '</div>'
+      ).join("");
+      el.addEventListener("click", (e) => {
+        const btn = e.target.closest(".status-btn");
+        if (!btn) return;
+        const row = btn.closest(".status-row");
+        const already = btn.classList.contains("active");
+        row.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
+        if (already) {
+          row.dataset.status = "";          // tapping the active button clears it
+        } else {
+          btn.classList.add("active");
+          row.dataset.status = btn.dataset.state;
+        }
+      });
     }
-    renderChecks("binderChecks", BINDER_ITEMS, "binder");
-    renderChecks("otherChecks", OTHER_ITEMS, "other");
+    renderStatusList("binderChecks", BINDER_ITEMS, "binder");
+    renderStatusList("otherChecks", OTHER_ITEMS, "other");
+
+    function collectStatus(group) {
+      return [...document.querySelectorAll('.status-row[data-group="' + group + '"]')]
+        .map(r => ({ item: decodeURIComponent(r.dataset.item), status: r.dataset.status || "" }));
+    }
 
     function collect() {
       const f = document.getElementById("kickoff");
@@ -235,8 +273,8 @@
           equipmentNeeds: f.equipment.value.trim(),
           manpower: f.manpower.value.trim()
         },
-        officeBinderNeeds: [...document.querySelectorAll('[data-group="binder"]:checked')].map(c => c.value),
-        otherBinders: [...document.querySelectorAll('[data-group="other"]:checked')].map(c => c.value),
+        officeBinderNeeds: collectStatus("binder"),
+        otherBinders: collectStatus("other"),
         handoffMeeting: { who: f.handoffWho.value.trim(), date: f.handoffDate.value },
         submittedAt: new Date().toISOString()
       };
@@ -256,7 +294,8 @@
 
     // Readable summary of the checklist, posted to the item's Updates feed.
     function buildSummary(d) {
-      const list = (arr) => (arr.length ? arr.map(x => "• " + x).join("\n") : "—");
+      const statusLabel = (s) => s === "completed" ? "Completed" : s === "not_complete" ? "Not complete" : "—";
+      const statusList = (arr) => arr.length ? arr.map(x => "• " + x.item + ": " + statusLabel(x.status)).join("\n") : "—";
       return [
         "KICKOFF CHECKLIST", "",
         "Overview",
@@ -273,8 +312,8 @@
         "Material quotes: " + (d.resources.materialQuotes || "—"),
         "Equipment needs: " + (d.resources.equipmentNeeds || "—"),
         "Manpower: " + (d.resources.manpower || "—"), "",
-        "Additional Office Binder Needs", list(d.officeBinderNeeds), "",
-        "Other – Binders", list(d.otherBinders), "",
+        "Additional Office Binder Needs", statusList(d.officeBinderNeeds), "",
+        "Other – Binders", statusList(d.otherBinders), "",
         "Hand-off Meeting",
         "Who: " + (d.handoffMeeting.who || "—"),
         "Date: " + (d.handoffMeeting.date || "—")
@@ -328,7 +367,6 @@
         );
 
         status.textContent = "Created monday item #" + itemId + " ✓";
-        e.target.reset();
       } catch (err) {
         status.textContent = "Error: " + err.message;
         out.style.display = "block";
