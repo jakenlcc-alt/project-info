@@ -459,6 +459,47 @@
       }
     }
 
+    // Find the "Active Jobs" folder (best-effort) so new project boards land there.
+    async function findActiveJobsFolder() {
+      try {
+        const ws = await mondayQuery("query { workspaces (limit: 100) { id } }", {});
+        const ids = (ws.workspaces || []).map(w => String(w.id));
+        if (!ids.length) return null;
+        const fr = await mondayQuery(
+          "query ($ws: [ID!]) { folders (workspace_ids: $ws, limit: 100) { id name } }",
+          { ws: ids }
+        );
+        const f = (fr.folders || []).find(x => (x.name || "").trim().toLowerCase() === "active jobs");
+        return f ? String(f.id) : null;
+      } catch (e) { return null; }
+    }
+
+    // Duplicate the template into the given folder; fall back to the default location.
+    async function duplicateTemplate(name, folderId) {
+      if (folderId) {
+        try {
+          const r = await mondayQuery(
+            "mutation ($boardId: ID!, $name: String!, $folder: ID!) {" +
+            "  duplicate_board (board_id: $boardId, duplicate_type: duplicate_board_with_structure, board_name: $name, folder_id: $folder) {" +
+            "    board { id }" +
+            "  }" +
+            "}",
+            { boardId: String(TEMPLATE_BOARD_ID), name: name, folder: folderId }
+          );
+          return r.duplicate_board.board.id;
+        } catch (e) { /* fall back to default placement below */ }
+      }
+      const r = await mondayQuery(
+        "mutation ($boardId: ID!, $name: String!) {" +
+        "  duplicate_board (board_id: $boardId, duplicate_type: duplicate_board_with_structure, board_name: $name) {" +
+        "    board { id }" +
+        "  }" +
+        "}",
+        { boardId: String(TEMPLATE_BOARD_ID), name: name }
+      );
+      return r.duplicate_board.board.id;
+    }
+
     document.getElementById("kickoff").addEventListener("submit", async (e) => {
       e.preventDefault();
       const status = document.getElementById("status");
@@ -475,16 +516,9 @@
 
       status.textContent = "Creating board in monday…";
       try {
-        // 1) Duplicate the template board → a fresh board for this project.
-        const dup = await mondayQuery(
-          "mutation ($boardId: ID!, $name: String!) {" +
-          "  duplicate_board (board_id: $boardId, duplicate_type: duplicate_board_with_structure, board_name: $name) {" +
-          "    board { id }" +
-          "  }" +
-          "}",
-          { boardId: String(TEMPLATE_BOARD_ID), name: data.overview.project }
-        );
-        const newBoardId = dup.duplicate_board.board.id;
+        // 1) Duplicate the template board into the "Active Jobs" folder (best-effort placement).
+        const folderId = await findActiveJobsFolder();
+        const newBoardId = await duplicateTemplate(data.overview.project, folderId);
 
         // 2) Create the Project Info item on the new board.
         const created = await mondayQuery(
