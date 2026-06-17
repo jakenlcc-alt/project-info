@@ -24,25 +24,32 @@
       line-height: 1.5;
       padding: 2rem 1rem 4rem;
     }
-    .wrap { max-width: 860px; margin: 0 auto; }
+    .wrap { max-width: 820px; margin: 0 auto; }
     header.page { margin-bottom: 1.5rem; }
     header.page h1 { margin: 0 0 0.25rem; font-size: 1.9rem; }
     header.page p { margin: 0; color: var(--muted); }
-    fieldset {
+
+    /* Section cards — title sits cleanly inside the box, not on the border */
+    .card {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 1.25rem 1.25rem 1.5rem;
+      padding: 1.25rem 1.5rem 1.5rem;
       margin: 0 0 1.25rem;
+      min-width: 0;
     }
-    legend {
-      padding: 0 0.5rem;
-      margin-left: -0.25rem;
-      font-size: 1.05rem;
+    .card-title {
+      margin: 0 0 1.1rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 1.1rem;
       font-weight: 700;
       color: var(--accent);
     }
-    label { display: block; font-weight: 600; font-size: 0.9rem; margin: 0.75rem 0 0.3rem; }
+
+    .field { margin-bottom: 1rem; }
+    .field:last-child { margin-bottom: 0; }
+    label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.35rem; }
     label .hint { font-weight: 400; color: var(--muted); }
     input[type="text"], input[type="date"], textarea {
       width: 100%;
@@ -54,29 +61,31 @@
       background: #fbfcfd;
     }
     input:focus, textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
-    textarea { resize: vertical; min-height: 64px; }
-    .grid2 { display: grid; gap: 0.5rem 1.25rem; grid-template-columns: 1fr 1fr; }
-    .indent { margin-left: 1.25rem; }
-    .checks { display: grid; gap: 0.5rem 1.25rem; grid-template-columns: 1fr 1fr; margin-top: 0.75rem; }
+    textarea { resize: vertical; min-height: 72px; }
+
+    .row2 { display: grid; gap: 1rem 1.25rem; grid-template-columns: 1fr 1fr; }
+    .subfield { margin-top: 0.25rem; margin-left: 1.25rem; padding-left: 0.9rem; border-left: 2px solid var(--line); }
+
+    .checks { display: grid; gap: 0.6rem 1.25rem; grid-template-columns: 1fr 1fr; }
     .check {
-      display: flex; align-items: center; gap: 0.55rem;
-      padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd;
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.6rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd;
     }
-    .check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+    .check input { width: 1.05rem; height: 1.05rem; margin: 0; accent-color: var(--accent); flex: none; }
     .check label { margin: 0; font-weight: 500; }
-    .actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 0.5rem; }
-    button {
-      font: inherit; font-weight: 600; cursor: pointer;
-      padding: 0.7rem 1.4rem; border-radius: 8px; border: 1px solid transparent;
-    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.25rem; }
+    button { font: inherit; font-weight: 600; cursor: pointer; padding: 0.7rem 1.4rem; border-radius: 8px; border: 1px solid transparent; }
     button.primary { background: var(--accent); color: var(--accent-ink); }
     button.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
     #status { font-size: 0.9rem; color: var(--muted); }
-    pre {
-      background: #0d1117; color: #e6edf3; padding: 1rem; border-radius: 8px;
-      overflow: auto; font-size: 0.8rem; display: none; margin-top: 1rem;
+    pre { background: #0d1117; color: #e6edf3; padding: 1rem; border-radius: 8px; overflow: auto; font-size: 0.8rem; display: none; margin-top: 1rem; }
+
+    @media (max-width: 640px) {
+      body { padding: 1.25rem 0.85rem 3rem; }
+      .row2, .checks { grid-template-columns: 1fr; }
+      .card { padding: 1.1rem 1.1rem 1.25rem; }
     }
-    @media (max-width: 640px) { .grid2, .checks { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -87,76 +96,88 @@
     </header>
 
     <form id="kickoff">
-      <fieldset>
-        <legend>Overview</legend>
-        <label for="project">Project</label>
-        <input type="text" id="project" name="project" />
-        <div class="grid2">
-          <div>
+      <fieldset class="card">
+        <h2 class="card-title">Overview</h2>
+        <div class="field">
+          <label for="project">Project</label>
+          <input type="text" id="project" name="project" />
+        </div>
+        <div class="row2">
+          <div class="field">
             <label for="builder">Builder</label>
             <input type="text" id="builder" name="builder" />
           </div>
-          <div>
+          <div class="field">
             <label for="builderPoc">Builder POC info <span class="hint">(name / phone / email)</span></label>
             <input type="text" id="builderPoc" name="builderPoc" />
           </div>
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Time Schedule</legend>
-        <div class="grid2">
-          <div>
+      <fieldset class="card">
+        <h2 class="card-title">Time Schedule</h2>
+        <div class="row2">
+          <div class="field">
             <label for="startDate">Estimated Start Date</label>
             <input type="date" id="startDate" name="startDate" />
           </div>
-          <div>
+          <div class="field">
             <label for="duration">Estimated Duration</label>
             <input type="text" id="duration" name="duration" placeholder="e.g. 6 weeks" />
           </div>
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Invoicing</legend>
-        <label for="invoicing">Invoicing <span class="hint">(terms / schedule / billing contact)</span></label>
-        <textarea id="invoicing" name="invoicing"></textarea>
+      <fieldset class="card">
+        <h2 class="card-title">Invoicing</h2>
+        <div class="field">
+          <label for="invoicing">Invoicing <span class="hint">(terms / schedule / billing contact)</span></label>
+          <textarea id="invoicing" name="invoicing"></textarea>
+        </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Resources</legend>
-        <label for="materialOrdering">Material ordering</label>
-        <input type="text" id="materialOrdering" name="materialOrdering" />
-        <div class="indent">
+      <fieldset class="card">
+        <h2 class="card-title">Resources</h2>
+        <div class="field">
+          <label for="materialOrdering">Material ordering</label>
+          <input type="text" id="materialOrdering" name="materialOrdering" />
+        </div>
+        <div class="field subfield">
           <label for="suppliers">What supplier(s)?</label>
           <input type="text" id="suppliers" name="suppliers" />
         </div>
-        <label for="materialQuotes">Material quotes</label>
-        <input type="text" id="materialQuotes" name="materialQuotes" />
-        <label for="equipment">Equipment needs</label>
-        <input type="text" id="equipment" name="equipment" />
-        <label for="manpower">Manpower</label>
-        <input type="text" id="manpower" name="manpower" />
+        <div class="field">
+          <label for="materialQuotes">Material quotes</label>
+          <input type="text" id="materialQuotes" name="materialQuotes" />
+        </div>
+        <div class="field">
+          <label for="equipment">Equipment needs</label>
+          <input type="text" id="equipment" name="equipment" />
+        </div>
+        <div class="field">
+          <label for="manpower">Manpower</label>
+          <input type="text" id="manpower" name="manpower" />
+        </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Additional Office Binder Needs</legend>
+      <fieldset class="card">
+        <h2 class="card-title">Additional Office Binder Needs</h2>
         <div class="checks" id="binderChecks"></div>
       </fieldset>
 
-      <fieldset>
-        <legend>Other – Binders</legend>
+      <fieldset class="card">
+        <h2 class="card-title">Other &ndash; Binders</h2>
         <div class="checks" id="otherChecks"></div>
       </fieldset>
 
-      <fieldset>
-        <legend>Hand-off Meeting</legend>
-        <div class="grid2">
-          <div>
+      <fieldset class="card">
+        <h2 class="card-title">Hand-off Meeting</h2>
+        <div class="row2">
+          <div class="field">
             <label for="handoffWho">Who</label>
             <input type="text" id="handoffWho" name="handoffWho" />
           </div>
-          <div>
+          <div class="field">
             <label for="handoffDate">Date</label>
             <input type="date" id="handoffDate" name="handoffDate" />
           </div>
@@ -184,11 +205,11 @@
     function renderChecks(containerId, items, group) {
       const el = document.getElementById(containerId);
       el.innerHTML = items.map((item, i) => {
-        const id = `${group}_${i}`;
-        return `<div class="check">
-          <input type="checkbox" id="${id}" data-group="${group}" value="${item}" />
-          <label for="${id}">${item}</label>
-        </div>`;
+        const id = group + "_" + i;
+        return '<div class="check">' +
+          '<input type="checkbox" id="' + id + '" data-group="' + group + '" value="' + item + '" />' +
+          '<label for="' + id + '">' + item + '</label>' +
+        '</div>';
       }).join("");
     }
     renderChecks("binderChecks", BINDER_ITEMS, "binder");
@@ -196,7 +217,7 @@
 
     function collect() {
       const f = document.getElementById("kickoff");
-      const data = {
+      return {
         overview: {
           project: f.project.value.trim(),
           builder: f.builder.value.trim(),
@@ -219,7 +240,6 @@
         handoffMeeting: { who: f.handoffWho.value.trim(), date: f.handoffDate.value },
         submittedAt: new Date().toISOString()
       };
-      return data;
     }
 
     document.getElementById("previewBtn").addEventListener("click", () => {
@@ -228,30 +248,91 @@
       out.textContent = JSON.stringify(collect(), null, 2);
     });
 
-    // Set this to your Cloudflare Worker endpoint to send submissions to monday.com.
-    // Leave empty to just preview the collected data locally (no backend call).
+    // Cloudflare Worker that proxies to the monday.com GraphQL API (injects the token).
     const SUBMIT_URL = "https://monday-token-keeper.jake-nlcc.workers.dev";
+    // monday.com board ID for kickoff items — the number in the board URL:
+    //   https://<account>.monday.com/boards/XXXXXXXXX   <-- that XXXXXXXXX
+    const BOARD_ID = "";
+
+    // Readable summary of the checklist, posted to the item's Updates feed.
+    function buildSummary(d) {
+      const list = (arr) => (arr.length ? arr.map(x => "• " + x).join("\n") : "—");
+      return [
+        "KICKOFF CHECKLIST", "",
+        "Overview",
+        "Project: " + (d.overview.project || "—"),
+        "Builder: " + (d.overview.builder || "—"),
+        "Builder POC: " + (d.overview.builderPoc || "—"), "",
+        "Time Schedule",
+        "Estimated Start Date: " + (d.timeSchedule.estimatedStartDate || "—"),
+        "Estimated Duration: " + (d.timeSchedule.estimatedDuration || "—"), "",
+        "Invoicing: " + (d.invoicing || "—"), "",
+        "Resources",
+        "Material ordering: " + (d.resources.materialOrdering || "—"),
+        "Supplier(s): " + (d.resources.suppliers || "—"),
+        "Material quotes: " + (d.resources.materialQuotes || "—"),
+        "Equipment needs: " + (d.resources.equipmentNeeds || "—"),
+        "Manpower: " + (d.resources.manpower || "—"), "",
+        "Additional Office Binder Needs", list(d.officeBinderNeeds), "",
+        "Other – Binders", list(d.otherBinders), "",
+        "Hand-off Meeting",
+        "Who: " + (d.handoffMeeting.who || "—"),
+        "Date: " + (d.handoffMeeting.date || "—")
+      ].join("\n");
+    }
+
+    // Send a GraphQL request to monday via the Worker; throw on monday errors.
+    async function mondayQuery(query, variables) {
+      const res = await fetch(SUBMIT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, variables })
+      });
+      const json = await res.json();
+      if (json.errors) throw new Error(json.errors.map(e => e.message).join("; "));
+      if (json.error) throw new Error(json.error);
+      return json.data;
+    }
 
     document.getElementById("kickoff").addEventListener("submit", async (e) => {
       e.preventDefault();
       const status = document.getElementById("status");
+      const out = document.getElementById("output");
       const data = collect();
-      if (!SUBMIT_URL) {
-        document.getElementById("output").style.display = "block";
-        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
-        status.textContent = "No endpoint configured — showing data below. Set SUBMIT_URL to send it.";
+
+      if (!SUBMIT_URL || !BOARD_ID) {
+        out.style.display = "block";
+        out.textContent = JSON.stringify(data, null, 2);
+        status.textContent = "BOARD_ID not set — showing data below. Add the monday board ID to enable submitting.";
         return;
       }
-      status.textContent = "Submitting…";
+      if (!data.overview.project) { status.textContent = "Enter a Project name first."; return; }
+
+      status.textContent = "Submitting to monday…";
       try {
-        const res = await fetch(SUBMIT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-        status.textContent = res.ok ? "Submitted ✓" : `Error: ${res.status}`;
+        // 1) Create the item, named after the project.
+        const created = await mondayQuery(
+          "mutation ($boardId: ID!, $itemName: String!) {" +
+          "  create_item (board_id: $boardId, item_name: $itemName) { id }" +
+          "}",
+          { boardId: String(BOARD_ID), itemName: "Kickoff – " + data.overview.project }
+        );
+        const itemId = created.create_item.id;
+
+        // 2) Post the full filled-out checklist to the item's Updates feed.
+        await mondayQuery(
+          "mutation ($itemId: ID!, $body: String!) {" +
+          "  create_update (item_id: $itemId, body: $body) { id }" +
+          "}",
+          { itemId: String(itemId), body: buildSummary(data) }
+        );
+
+        status.textContent = "Created monday item #" + itemId + " ✓";
+        e.target.reset();
       } catch (err) {
-        status.textContent = "Network error: " + err.message;
+        status.textContent = "Error: " + err.message;
+        out.style.display = "block";
+        out.textContent = JSON.stringify(data, null, 2);
       }
     });
   </script>
