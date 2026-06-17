@@ -230,7 +230,7 @@
 
     // Set this to your Cloudflare Worker endpoint to send submissions to monday.com.
     // Leave empty to just preview the collected data locally (no backend call).
-    const SUBMIT_URL = "";
+    const SUBMIT_URL = "https://monday-token-keeper.jake-nlcc.workers.dev";
 
     document.getElementById("kickoff").addEventListener("submit", async (e) => {
       e.preventDefault();
