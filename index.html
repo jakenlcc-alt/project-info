@@ -57,7 +57,7 @@
     .field:last-child { margin-bottom: 0; }
     label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.35rem; }
     label .hint { font-weight: 400; color: var(--muted); }
-    input[type="text"], input[type="date"], textarea {
+    input[type="text"], input[type="date"], input[type="email"], input[type="tel"], textarea {
       width: 100%;
       padding: 0.6rem 0.7rem;
       border: 1px solid var(--line);
@@ -71,6 +71,10 @@
 
     .row2 { display: grid; gap: 1rem 1.25rem; grid-template-columns: 1fr 1fr; }
     .subfield { margin-top: 0.25rem; margin-left: 1.25rem; padding-left: 0.9rem; border-left: 2px solid var(--line); }
+
+    /* Contact role groups */
+    .contact-role { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.55rem; color: var(--accent); }
+    .contact-group + .contact-group { margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
 
     /* Completed / Not Complete status rows */
     .statuslist { display: flex; flex-direction: column; gap: 0.6rem; }
@@ -115,9 +119,15 @@
     <form id="kickoff">
       <fieldset class="card">
         <h2 class="card-title">Overview</h2>
-        <div class="field">
-          <label for="project">Project</label>
-          <input type="text" id="project" name="project" />
+        <div class="row2">
+          <div class="field">
+            <label for="project">Project</label>
+            <input type="text" id="project" name="project" />
+          </div>
+          <div class="field">
+            <label for="projectId">Project ID #</label>
+            <input type="text" id="projectId" name="projectId" />
+          </div>
         </div>
         <div class="row2">
           <div class="field">
@@ -127,6 +137,49 @@
           <div class="field">
             <label for="builderPoc">Builder POC info <span class="hint">(name / phone / email)</span></label>
             <input type="text" id="builderPoc" name="builderPoc" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="card">
+        <h2 class="card-title">Contacts</h2>
+        <div class="contact-group">
+          <div class="contact-role">Superintendent</div>
+          <div class="row2">
+            <div class="field">
+              <label for="superPhone">Phone</label>
+              <input type="tel" id="superPhone" name="superPhone" />
+            </div>
+            <div class="field">
+              <label for="superEmail">Email</label>
+              <input type="email" id="superEmail" name="superEmail" />
+            </div>
+          </div>
+        </div>
+        <div class="contact-group">
+          <div class="contact-role">Project Manager</div>
+          <div class="row2">
+            <div class="field">
+              <label for="pmPhone">Phone</label>
+              <input type="tel" id="pmPhone" name="pmPhone" />
+            </div>
+            <div class="field">
+              <label for="pmEmail">Email</label>
+              <input type="email" id="pmEmail" name="pmEmail" />
+            </div>
+          </div>
+        </div>
+        <div class="contact-group">
+          <div class="contact-role">Accounting Department</div>
+          <div class="row2">
+            <div class="field">
+              <label for="acctPhone">Phone</label>
+              <input type="tel" id="acctPhone" name="acctPhone" />
+            </div>
+            <div class="field">
+              <label for="acctEmail">Email</label>
+              <input type="email" id="acctEmail" name="acctEmail" />
+            </div>
           </div>
         </div>
       </fieldset>
@@ -258,8 +311,14 @@
       return {
         overview: {
           project: f.project.value.trim(),
+          projectId: f.projectId.value.trim(),
           builder: f.builder.value.trim(),
           builderPoc: f.builderPoc.value.trim()
+        },
+        contacts: {
+          superintendent: { phone: f.superPhone.value.trim(), email: f.superEmail.value.trim() },
+          projectManager: { phone: f.pmPhone.value.trim(), email: f.pmEmail.value.trim() },
+          accounting: { phone: f.acctPhone.value.trim(), email: f.acctEmail.value.trim() }
         },
         timeSchedule: {
           estimatedStartDate: f.startDate.value,
@@ -294,14 +353,21 @@
 
     // Readable summary of the checklist, posted to the item's Updates feed.
     function buildSummary(d) {
+      const c = d.contacts;
       const statusLabel = (s) => s === "completed" ? "Completed" : s === "not_complete" ? "Not complete" : "—";
       const statusList = (arr) => arr.length ? arr.map(x => "• " + x.item + ": " + statusLabel(x.status)).join("\n") : "—";
+      const contact = (x) => "Phone: " + (x.phone || "—") + " | Email: " + (x.email || "—");
       return [
         "KICKOFF CHECKLIST", "",
         "Overview",
         "Project: " + (d.overview.project || "—"),
+        "Project ID #: " + (d.overview.projectId || "—"),
         "Builder: " + (d.overview.builder || "—"),
         "Builder POC: " + (d.overview.builderPoc || "—"), "",
+        "Contacts",
+        "Superintendent — " + contact(c.superintendent),
+        "Project Manager — " + contact(c.projectManager),
+        "Accounting — " + contact(c.accounting), "",
         "Time Schedule",
         "Estimated Start Date: " + (d.timeSchedule.estimatedStartDate || "—"),
         "Estimated Duration: " + (d.timeSchedule.estimatedDuration || "—"), "",
