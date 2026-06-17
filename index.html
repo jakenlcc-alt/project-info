@@ -3,51 +3,257 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>project-info</title>
-  <meta name="description" content="project-info — deployed from main via Netlify." />
+  <title>Kickoff Checklist</title>
+  <meta name="description" content="Project kickoff checklist intake form." />
   <style>
-    :root { color-scheme: light dark; }
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --ink: #1c2430;
+      --muted: #5e6b7a;
+      --line: #dce3ea;
+      --accent: #1f6feb;
+      --accent-ink: #ffffff;
+    }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 2rem;
+      background: var(--bg);
+      color: var(--ink);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
+      line-height: 1.5;
+      padding: 2rem 1rem 4rem;
     }
-    main { max-width: 40rem; text-align: center; }
-    .badge {
-      display: inline-block;
-      margin-bottom: 1.5rem;
-      padding: 0.25rem 0.75rem;
-      border: 1px solid #2ea043;
-      border-radius: 999px;
-      color: #3fb950;
-      font-size: 0.8rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+    .wrap { max-width: 860px; margin: 0 auto; }
+    header.page { margin-bottom: 1.5rem; }
+    header.page h1 { margin: 0 0 0.25rem; font-size: 1.9rem; }
+    header.page p { margin: 0; color: var(--muted); }
+    fieldset {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.25rem 1.25rem 1.5rem;
+      margin: 0 0 1.25rem;
     }
-    h1 { margin: 0 0 0.5rem; font-size: 2.5rem; }
-    p { margin: 0 0 1.5rem; font-size: 1.1rem; line-height: 1.6; color: #9da7b3; }
-    code { padding: 0.15rem 0.4rem; border-radius: 4px; background: #161b22; font-size: 0.9em; }
-    footer { margin-top: 2rem; font-size: 0.85rem; color: #6e7681; }
-    a { color: #58a6ff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    legend {
+      padding: 0 0.5rem;
+      margin-left: -0.25rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    label { display: block; font-weight: 600; font-size: 0.9rem; margin: 0.75rem 0 0.3rem; }
+    label .hint { font-weight: 400; color: var(--muted); }
+    input[type="text"], input[type="date"], textarea {
+      width: 100%;
+      padding: 0.6rem 0.7rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      color: var(--ink);
+      background: #fbfcfd;
+    }
+    input:focus, textarea:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 64px; }
+    .grid2 { display: grid; gap: 0.5rem 1.25rem; grid-template-columns: 1fr 1fr; }
+    .indent { margin-left: 1.25rem; }
+    .checks { display: grid; gap: 0.5rem 1.25rem; grid-template-columns: 1fr 1fr; margin-top: 0.75rem; }
+    .check {
+      display: flex; align-items: center; gap: 0.55rem;
+      padding: 0.5rem 0.65rem; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd;
+    }
+    .check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
+    .check label { margin: 0; font-weight: 500; }
+    .actions { display: flex; gap: 0.75rem; align-items: center; margin-top: 0.5rem; }
+    button {
+      font: inherit; font-weight: 600; cursor: pointer;
+      padding: 0.7rem 1.4rem; border-radius: 8px; border: 1px solid transparent;
+    }
+    button.primary { background: var(--accent); color: var(--accent-ink); }
+    button.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+    #status { font-size: 0.9rem; color: var(--muted); }
+    pre {
+      background: #0d1117; color: #e6edf3; padding: 1rem; border-radius: 8px;
+      overflow: auto; font-size: 0.8rem; display: none; margin-top: 1rem;
+    }
+    @media (max-width: 640px) { .grid2, .checks { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <main>
-    <span class="badge">Live</span>
-    <h1>project-info</h1>
-    <p>This site deploys automatically from the <code>main</code> branch via Netlify.</p>
-    <p>Replace this page with your own content — edit <code>index.html</code> and push to <code>main</code>.</p>
-    <footer>
-      Deployed with Netlify ·
-      <a href="https://github.com/jakenlcc-alt/project-info">GitHub</a>
-    </footer>
-  </main>
+  <div class="wrap">
+    <header class="page">
+      <h1>Kickoff Checklist</h1>
+      <p>Complete at project kickoff. Fields mirror the standard kickoff checklist.</p>
+    </header>
+
+    <form id="kickoff">
+      <fieldset>
+        <legend>Overview</legend>
+        <label for="project">Project</label>
+        <input type="text" id="project" name="project" />
+        <div class="grid2">
+          <div>
+            <label for="builder">Builder</label>
+            <input type="text" id="builder" name="builder" />
+          </div>
+          <div>
+            <label for="builderPoc">Builder POC info <span class="hint">(name / phone / email)</span></label>
+            <input type="text" id="builderPoc" name="builderPoc" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Time Schedule</legend>
+        <div class="grid2">
+          <div>
+            <label for="startDate">Estimated Start Date</label>
+            <input type="date" id="startDate" name="startDate" />
+          </div>
+          <div>
+            <label for="duration">Estimated Duration</label>
+            <input type="text" id="duration" name="duration" placeholder="e.g. 6 weeks" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Invoicing</legend>
+        <label for="invoicing">Invoicing <span class="hint">(terms / schedule / billing contact)</span></label>
+        <textarea id="invoicing" name="invoicing"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>Resources</legend>
+        <label for="materialOrdering">Material ordering</label>
+        <input type="text" id="materialOrdering" name="materialOrdering" />
+        <div class="indent">
+          <label for="suppliers">What supplier(s)?</label>
+          <input type="text" id="suppliers" name="suppliers" />
+        </div>
+        <label for="materialQuotes">Material quotes</label>
+        <input type="text" id="materialQuotes" name="materialQuotes" />
+        <label for="equipment">Equipment needs</label>
+        <input type="text" id="equipment" name="equipment" />
+        <label for="manpower">Manpower</label>
+        <input type="text" id="manpower" name="manpower" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Additional Office Binder Needs</legend>
+        <div class="checks" id="binderChecks"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Other – Binders</legend>
+        <div class="checks" id="otherChecks"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Hand-off Meeting</legend>
+        <div class="grid2">
+          <div>
+            <label for="handoffWho">Who</label>
+            <input type="text" id="handoffWho" name="handoffWho" />
+          </div>
+          <div>
+            <label for="handoffDate">Date</label>
+            <input type="date" id="handoffDate" name="handoffDate" />
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit" class="primary">Submit</button>
+        <button type="button" class="secondary" id="previewBtn">Preview data</button>
+        <span id="status"></span>
+      </div>
+      <pre id="output"></pre>
+    </form>
+  </div>
+
+  <script>
+    // Office binder checklist items (from the kickoff checklist document)
+    const BINDER_ITEMS = [
+      "Statement of Values", "Job cost sheet", "New Job information sheet",
+      "Estimate", "Contract", "Architecture drawings", "Shop Drawings",
+      "Takeoff", "Submittals", "Submittal approval", "Scope", "Road Map", "Spec Sheet"
+    ];
+    const OTHER_ITEMS = ["Safety Plan Binder"];
+
+    function renderChecks(containerId, items, group) {
+      const el = document.getElementById(containerId);
+      el.innerHTML = items.map((item, i) => {
+        const id = `${group}_${i}`;
+        return `<div class="check">
+          <input type="checkbox" id="${id}" data-group="${group}" value="${item}" />
+          <label for="${id}">${item}</label>
+        </div>`;
+      }).join("");
+    }
+    renderChecks("binderChecks", BINDER_ITEMS, "binder");
+    renderChecks("otherChecks", OTHER_ITEMS, "other");
+
+    function collect() {
+      const f = document.getElementById("kickoff");
+      const data = {
+        overview: {
+          project: f.project.value.trim(),
+          builder: f.builder.value.trim(),
+          builderPoc: f.builderPoc.value.trim()
+        },
+        timeSchedule: {
+          estimatedStartDate: f.startDate.value,
+          estimatedDuration: f.duration.value.trim()
+        },
+        invoicing: f.invoicing.value.trim(),
+        resources: {
+          materialOrdering: f.materialOrdering.value.trim(),
+          suppliers: f.suppliers.value.trim(),
+          materialQuotes: f.materialQuotes.value.trim(),
+          equipmentNeeds: f.equipment.value.trim(),
+          manpower: f.manpower.value.trim()
+        },
+        officeBinderNeeds: [...document.querySelectorAll('[data-group="binder"]:checked')].map(c => c.value),
+        otherBinders: [...document.querySelectorAll('[data-group="other"]:checked')].map(c => c.value),
+        handoffMeeting: { who: f.handoffWho.value.trim(), date: f.handoffDate.value },
+        submittedAt: new Date().toISOString()
+      };
+      return data;
+    }
+
+    document.getElementById("previewBtn").addEventListener("click", () => {
+      const out = document.getElementById("output");
+      out.style.display = "block";
+      out.textContent = JSON.stringify(collect(), null, 2);
+    });
+
+    // Set this to your Cloudflare Worker endpoint to send submissions to monday.com.
+    // Leave empty to just preview the collected data locally (no backend call).
+    const SUBMIT_URL = "";
+
+    document.getElementById("kickoff").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const status = document.getElementById("status");
+      const data = collect();
+      if (!SUBMIT_URL) {
+        document.getElementById("output").style.display = "block";
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+        status.textContent = "No endpoint configured — showing data below. Set SUBMIT_URL to send it.";
+        return;
+      }
+      status.textContent = "Submitting…";
+      try {
+        const res = await fetch(SUBMIT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        status.textContent = res.ok ? "Submitted ✓" : `Error: ${res.status}`;
+      } catch (err) {
+        status.textContent = "Network error: " + err.message;
+      }
+    });
+  </script>
 </body>
 </html>
