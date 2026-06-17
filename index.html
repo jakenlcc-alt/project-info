@@ -121,6 +121,13 @@
       <fieldset class="card">
         <h2 class="card-title">Contact Information</h2>
         <div class="contact-group">
+          <div class="contact-role">Company</div>
+          <div class="field">
+            <label for="companyAddress">Address</label>
+            <input type="text" id="companyAddress" name="companyAddress" />
+          </div>
+        </div>
+        <div class="contact-group">
           <div class="contact-role">Builder POC</div>
           <div class="field">
             <label for="builderPoc">Name / phone / email</label>
@@ -181,8 +188,8 @@
           </div>
         </div>
         <div class="field">
-          <label for="builder">Builder</label>
-          <input type="text" id="builder" name="builder" />
+          <label for="projectAddress">Project Address</label>
+          <input type="text" id="projectAddress" name="projectAddress" />
         </div>
       </fieldset>
 
@@ -202,33 +209,19 @@
 
       <fieldset class="card">
         <h2 class="card-title">Invoicing</h2>
-        <div class="field">
-          <label for="invoicing">Invoicing <span class="hint">(terms / schedule / billing contact)</span></label>
-          <textarea id="invoicing" name="invoicing"></textarea>
-        </div>
-      </fieldset>
-
-      <fieldset class="card">
-        <h2 class="card-title">Resources</h2>
-        <div class="field">
-          <label for="materialOrdering">Material ordering</label>
-          <input type="text" id="materialOrdering" name="materialOrdering" />
+        <div class="row2">
+          <div class="field">
+            <label for="billingFrequency">Billing Frequency</label>
+            <input type="text" id="billingFrequency" name="billingFrequency" placeholder="e.g. Monthly, By milestone/draw" />
+          </div>
+          <div class="field">
+            <label for="paymentTerms">Payment Terms</label>
+            <input type="text" id="paymentTerms" name="paymentTerms" placeholder="e.g. Net 30" />
+          </div>
         </div>
         <div class="field">
-          <label for="suppliers">What supplier(s)?</label>
-          <input type="text" id="suppliers" name="suppliers" />
-        </div>
-        <div class="field">
-          <label for="materialQuotes">Material quotes</label>
-          <input type="text" id="materialQuotes" name="materialQuotes" />
-        </div>
-        <div class="field">
-          <label for="equipment">Equipment needs</label>
-          <input type="text" id="equipment" name="equipment" />
-        </div>
-        <div class="field">
-          <label for="manpower">Manpower</label>
-          <input type="text" id="manpower" name="manpower" />
+          <label for="billingSchedule">Schedule for Billing</label>
+          <textarea id="billingSchedule" name="billingSchedule" placeholder="When invoices go out — billing dates, draws, or milestones"></textarea>
         </div>
       </fieldset>
 
@@ -330,6 +323,7 @@
       const f = document.getElementById("kickoff");
       return {
         contacts: {
+          companyAddress: f.companyAddress.value.trim(),
           builderPoc: f.builderPoc.value.trim(),
           superintendent: { phone: f.superPhone.value.trim(), email: f.superEmail.value.trim() },
           projectManager: { phone: f.pmPhone.value.trim(), email: f.pmEmail.value.trim() },
@@ -338,19 +332,16 @@
         overview: {
           project: f.project.value.trim(),
           projectId: f.projectId.value.trim(),
-          builder: f.builder.value.trim()
+          projectAddress: f.projectAddress.value.trim()
         },
         timeSchedule: {
           estimatedStartDate: f.startDate.value,
           estimatedDuration: f.duration.value.trim()
         },
-        invoicing: f.invoicing.value.trim(),
-        resources: {
-          materialOrdering: f.materialOrdering.value.trim(),
-          suppliers: f.suppliers.value.trim(),
-          materialQuotes: f.materialQuotes.value.trim(),
-          equipmentNeeds: f.equipment.value.trim(),
-          manpower: f.manpower.value.trim()
+        invoicing: {
+          billingFrequency: f.billingFrequency.value.trim(),
+          paymentTerms: f.paymentTerms.value.trim(),
+          schedule: f.billingSchedule.value.trim()
         },
         officeBinderNeeds: collectStatus("binder"),
         otherBinders: collectStatus("other"),
@@ -380,9 +371,11 @@
         return "• " + x.item + ": " + statusLabel(x.status) + files;
       }).join("\n") : "—";
       const contact = (x) => "Phone: " + (x.phone || "—") + " | Email: " + (x.email || "—");
+      const inv = d.invoicing || {};
       return [
         "KICKOFF CHECKLIST", "",
         "Contact Information",
+        "Company Address: " + (c.companyAddress || "—"),
         "Builder POC: " + (c.builderPoc || "—"),
         "Superintendent — " + contact(c.superintendent),
         "Project Manager — " + contact(c.projectManager),
@@ -390,17 +383,14 @@
         "Overview",
         "Project: " + (d.overview.project || "—"),
         "Project ID #: " + (d.overview.projectId || "—"),
-        "Builder: " + (d.overview.builder || "—"), "",
+        "Project Address: " + (d.overview.projectAddress || "—"), "",
         "Time Schedule",
         "Estimated Start Date: " + (d.timeSchedule.estimatedStartDate || "—"),
         "Estimated Duration: " + (d.timeSchedule.estimatedDuration || "—"), "",
-        "Invoicing: " + (d.invoicing || "—"), "",
-        "Resources",
-        "Material ordering: " + (d.resources.materialOrdering || "—"),
-        "Supplier(s): " + (d.resources.suppliers || "—"),
-        "Material quotes: " + (d.resources.materialQuotes || "—"),
-        "Equipment needs: " + (d.resources.equipmentNeeds || "—"),
-        "Manpower: " + (d.resources.manpower || "—"), "",
+        "Invoicing",
+        "Billing Frequency: " + (inv.billingFrequency || "—"),
+        "Payment Terms: " + (inv.paymentTerms || "—"),
+        "Schedule for Billing: " + (inv.schedule || "—"), "",
         "Additional Office Binder Needs", statusList(d.officeBinderNeeds), "",
         "Other – Binders", statusList(d.otherBinders), "",
         "Hand-off Meeting",
@@ -414,6 +404,7 @@
       const c = d.contacts;
       const line = (label, x) => label + " — Phone: " + (x.phone || "—") + ", Email: " + (x.email || "—");
       return [
+        "Company Address: " + (c.companyAddress || "—"),
         "Builder POC: " + (c.builderPoc || "—"),
         line("Superintendent", c.superintendent),
         line("Project Manager", c.projectManager),
