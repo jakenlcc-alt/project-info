@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Kickoff Checklist</title>
   <meta name="description" content="Project kickoff checklist intake form." />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1f6feb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Kickoff" />
   <style>
     :root {
       --bg: #f4f6f8;
@@ -63,6 +72,7 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       font: inherit;
+      font-size: 16px;
       color: var(--ink);
       background: #fbfcfd;
     }
@@ -107,9 +117,14 @@
     pre { background: #0d1117; color: #e6edf3; padding: 1rem; border-radius: 8px; overflow: auto; font-size: 0.8rem; display: none; margin-top: 1rem; }
 
     @media (max-width: 640px) {
-      body { padding: 1.25rem 0.85rem 3rem; }
+      body { padding: 1.25rem 0.85rem calc(3rem + env(safe-area-inset-bottom)); }
       .row2 { grid-template-columns: 1fr; }
       .card { padding: 1.1rem 1.1rem 1.25rem; }
+      header.page h1 { font-size: 1.6rem; }
+      .actions { flex-direction: column; align-items: stretch; }
+      .actions button.action { width: 100%; }
+      #status { text-align: center; }
+      .status-btn { padding: 0.5rem 0.95rem; }
     }
   </style>
 </head>
