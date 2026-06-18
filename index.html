@@ -95,6 +95,9 @@
     .status-btn.done.active { background: var(--green); border-color: var(--green); color: #fff; }
     .status-btn.not.active  { background: var(--red);   border-color: var(--red);   color: #fff; }
     .status-file { font-size: 0.8rem; color: var(--muted); max-width: 100%; }
+    .status-btn.remove { color: var(--muted); font-weight: 700; line-height: 1; padding: 0.38rem 0.62rem; }
+    .status-btn.remove:hover { color: var(--red-ink); border-color: var(--red); }
+    .status-name-input { font: inherit; padding: 0.32rem 0.45rem; border: 1px solid var(--line); border-radius: 6px; background: #fff; flex: 1 1 150px; min-width: 0; }
 
     .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.25rem; }
     button.action { font: inherit; font-weight: 600; cursor: pointer; padding: 0.7rem 1.4rem; border-radius: 8px; border: 1px solid transparent; }
@@ -130,8 +133,18 @@
         <div class="contact-group">
           <div class="contact-role">Builder POC</div>
           <div class="field">
-            <label for="builderPoc">Name / phone / email</label>
-            <input type="text" id="builderPoc" name="builderPoc" />
+            <label for="builderName">Name</label>
+            <input type="text" id="builderName" name="builderName" />
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="builderPhone">Phone</label>
+              <input type="tel" id="builderPhone" name="builderPhone" />
+            </div>
+            <div class="field">
+              <label for="builderEmail">Email</label>
+              <input type="email" id="builderEmail" name="builderEmail" />
+            </div>
           </div>
         </div>
         <div class="contact-group">
@@ -191,6 +204,20 @@
           <label for="projectAddress">Project Address</label>
           <input type="text" id="projectAddress" name="projectAddress" />
         </div>
+        <div class="row2">
+          <div class="field">
+            <label for="contractNumber">Contract #</label>
+            <input type="text" id="contractNumber" name="contractNumber" />
+          </div>
+          <div class="field">
+            <label for="quickbooks">QuickBooks #</label>
+            <input type="text" id="quickbooks" name="quickbooks" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="procoreNumber">Procore #</label>
+          <input type="text" id="procoreNumber" name="procoreNumber" />
+        </div>
       </fieldset>
 
       <fieldset class="card">
@@ -227,8 +254,9 @@
 
       <fieldset class="card">
         <h2 class="card-title">Additional Office Binder Needs</h2>
-        <p class="hint" style="margin:-0.4rem 0 1rem;">Mark each item and attach the document if you have it.</p>
+        <p class="hint" style="margin:-0.4rem 0 1rem;">Mark each item and attach the document if you have it. Add or remove items as needed.</p>
         <div class="statuslist" id="binderChecks"></div>
+        <button type="button" class="action secondary" id="addBinderItem" style="margin-top:0.85rem;">+ Add item</button>
       </fieldset>
 
       <fieldset class="card">
@@ -268,27 +296,39 @@
     ];
     const OTHER_ITEMS = ["Safety Plan Binder"];
 
-    // Render each item: name + Completed (green) / Not Complete (red) toggle + file upload.
-    function renderStatusList(containerId, items, group) {
-      const el = document.getElementById(containerId);
-      el.innerHTML = items.map((item) =>
-        '<div class="status-row" data-group="' + group + '" data-item="' + encodeURIComponent(item) + '" data-status="">' +
+    // Build one status row. opts: { removable, custom } — custom rows have an editable name.
+    function statusRowHTML(item, group, opts) {
+      opts = opts || {};
+      const safe = (item || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+      const nameHtml = opts.custom
+        ? '<input type="text" class="status-name status-name-input" placeholder="Item name" value="' + safe + '" />'
+        : '<span class="status-name">' + safe + '</span>';
+      return '<div class="status-row" data-group="' + group + '" data-item="' + encodeURIComponent(item || "") + '" data-status="">' +
           '<div class="status-head">' +
-            '<span class="status-name">' + item + '</span>' +
+            nameHtml +
             '<div class="status-btns">' +
               '<button type="button" class="status-btn done" data-state="completed">Completed</button>' +
               '<button type="button" class="status-btn not" data-state="not_complete">Not Complete</button>' +
+              (opts.removable ? '<button type="button" class="status-btn remove" aria-label="Remove item">×</button>' : '') +
             '</div>' +
           '</div>' +
-          '<input type="file" class="status-file" multiple aria-label="Attach files for ' + item + '" />' +
-        '</div>'
-      ).join("");
+          '<input type="file" class="status-file" multiple aria-label="Attach files" />' +
+        '</div>';
+    }
+
+    // Render a list of status rows; editable lists allow per-row removal and adding.
+    function renderStatusList(containerId, items, group, opts) {
+      opts = opts || {};
+      const el = document.getElementById(containerId);
+      el.innerHTML = items.map(item => statusRowHTML(item, group, { removable: opts.editable })).join("");
       el.addEventListener("click", (e) => {
+        const removeBtn = e.target.closest(".status-btn.remove");
+        if (removeBtn) { removeBtn.closest(".status-row").remove(); return; }
         const btn = e.target.closest(".status-btn");
         if (!btn) return;
         const row = btn.closest(".status-row");
         const already = btn.classList.contains("active");
-        row.querySelectorAll(".status-btn").forEach(b => b.classList.remove("active"));
+        row.querySelectorAll(".status-btn.done, .status-btn.not").forEach(b => b.classList.remove("active"));
         if (already) {
           row.dataset.status = "";          // tapping the active button clears it
         } else {
@@ -297,24 +337,39 @@
         }
       });
     }
-    renderStatusList("binderChecks", BINDER_ITEMS, "binder");
+    renderStatusList("binderChecks", BINDER_ITEMS, "binder", { editable: true });
     renderStatusList("otherChecks", OTHER_ITEMS, "other");
 
+    // "Add item" appends a blank, editable, removable binder row.
+    document.getElementById("addBinderItem").addEventListener("click", () => {
+      document.getElementById("binderChecks").insertAdjacentHTML(
+        "beforeend", statusRowHTML("", "binder", { removable: true, custom: true })
+      );
+    });
+
+    // Read a row's item name from its editable input (custom rows) or stored value.
+    function rowItemName(r) {
+      const input = r.querySelector(".status-name-input");
+      return (input ? input.value : decodeURIComponent(r.dataset.item)).trim();
+    }
+
     function collectStatus(group) {
-      return [...document.querySelectorAll('.status-row[data-group="' + group + '"]')].map(r => {
-        const input = r.querySelector(".status-file");
-        const files = input ? [...input.files].map(f => f.name) : [];
-        return { item: decodeURIComponent(r.dataset.item), status: r.dataset.status || "", files };
-      });
+      return [...document.querySelectorAll('.status-row[data-group="' + group + '"]')]
+        .map(r => {
+          const input = r.querySelector(".status-file");
+          const files = input ? [...input.files].map(f => f.name) : [];
+          return { item: rowItemName(r), status: r.dataset.status || "", files };
+        })
+        .filter(x => x.item);   // drop blank custom rows
     }
 
     // All File objects attached across the binder/other lists (for upload at submit).
     function collectFiles() {
       const out = [];
       document.querySelectorAll(".status-row").forEach(r => {
-        const item = decodeURIComponent(r.dataset.item);
+        const item = rowItemName(r);
         const input = r.querySelector(".status-file");
-        if (input) for (const f of input.files) out.push({ item, file: f });
+        if (input && item) for (const f of input.files) out.push({ item, file: f });
       });
       return out;
     }
@@ -324,7 +379,7 @@
       return {
         contacts: {
           companyAddress: f.companyAddress.value.trim(),
-          builderPoc: f.builderPoc.value.trim(),
+          builderPoc: { name: f.builderName.value.trim(), phone: f.builderPhone.value.trim(), email: f.builderEmail.value.trim() },
           superintendent: { phone: f.superPhone.value.trim(), email: f.superEmail.value.trim() },
           projectManager: { phone: f.pmPhone.value.trim(), email: f.pmEmail.value.trim() },
           accounting: { phone: f.acctPhone.value.trim(), email: f.acctEmail.value.trim() }
@@ -332,7 +387,10 @@
         overview: {
           project: f.project.value.trim(),
           projectId: f.projectId.value.trim(),
-          projectAddress: f.projectAddress.value.trim()
+          projectAddress: f.projectAddress.value.trim(),
+          contractNumber: f.contractNumber.value.trim(),
+          quickbooks: f.quickbooks.value.trim(),
+          procoreNumber: f.procoreNumber.value.trim()
         },
         timeSchedule: {
           estimatedStartDate: f.startDate.value,
@@ -376,14 +434,17 @@
         "KICKOFF CHECKLIST", "",
         "Contact Information",
         "Company Address: " + (c.companyAddress || "—"),
-        "Builder POC: " + (c.builderPoc || "—"),
+        "Builder POC: " + (c.builderPoc.name || "—") + " — " + contact(c.builderPoc),
         "Superintendent — " + contact(c.superintendent),
         "Project Manager — " + contact(c.projectManager),
         "Accounting — " + contact(c.accounting), "",
         "Overview",
         "Project: " + (d.overview.project || "—"),
         "Project ID #: " + (d.overview.projectId || "—"),
-        "Project Address: " + (d.overview.projectAddress || "—"), "",
+        "Project Address: " + (d.overview.projectAddress || "—"),
+        "Contract #: " + (d.overview.contractNumber || "—"),
+        "QuickBooks #: " + (d.overview.quickbooks || "—"),
+        "Procore #: " + (d.overview.procoreNumber || "—"), "",
         "Time Schedule",
         "Estimated Start Date: " + (d.timeSchedule.estimatedStartDate || "—"),
         "Estimated Duration: " + (d.timeSchedule.estimatedDuration || "—"), "",
@@ -405,7 +466,7 @@
       const line = (label, x) => label + " — Phone: " + (x.phone || "—") + ", Email: " + (x.email || "—");
       return [
         "Company Address: " + (c.companyAddress || "—"),
-        "Builder POC: " + (c.builderPoc || "—"),
+        "Builder POC: " + (c.builderPoc.name || "—") + " — Phone: " + (c.builderPoc.phone || "—") + ", Email: " + (c.builderPoc.email || "—"),
         line("Superintendent", c.superintendent),
         line("Project Manager", c.projectManager),
         line("Accounting", c.accounting)
@@ -457,6 +518,24 @@
         const json = await res.json();
         if (json.errors) throw new Error(json.errors.map(e => e.message).join("; "));
       }
+    }
+
+    // Remove the inherited "Resources" column from a duplicated board (best-effort).
+    async function removeResourcesColumn(boardId) {
+      try {
+        const res = await mondayQuery(
+          "query ($id: [ID!]) { boards (ids: $id) { columns { id title } } }",
+          { id: [String(boardId)] }
+        );
+        const cols = (res.boards && res.boards[0] && res.boards[0].columns) || [];
+        const col = cols.find(c => (c.title || "").trim().toLowerCase() === "resources");
+        if (col) {
+          await mondayQuery(
+            "mutation ($bid: ID!, $cid: String!) { delete_column (board_id: $bid, column_id: $cid) { id } }",
+            { bid: String(boardId), cid: String(col.id) }
+          );
+        }
+      } catch (e) { /* best-effort */ }
     }
 
     // Find the "Active Jobs" folder (best-effort) so new project boards land there.
@@ -536,6 +615,7 @@
         // 4) Best-effort: Contact Information + Kick Off columns, and uploaded documents.
         let note = "";
         try {
+          await removeResourcesColumn(newBoardId);
           await addTextColumn(newBoardId, itemId, "Contact Information", buildContactInfo(data));
           await addTextColumn(newBoardId, itemId, "Kick Off", buildSummary(data));
           const files = collectFiles();
