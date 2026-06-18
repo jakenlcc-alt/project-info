@@ -232,20 +232,6 @@
           <label for="projectAddress">Project Address</label>
           <input type="text" id="projectAddress" name="projectAddress" />
         </div>
-        <div class="row2">
-          <div class="field">
-            <label for="contractNumber">Contract #</label>
-            <input type="text" id="contractNumber" name="contractNumber" />
-          </div>
-          <div class="field">
-            <label for="quickbooks">QuickBooks #</label>
-            <input type="text" id="quickbooks" name="quickbooks" />
-          </div>
-        </div>
-        <div class="field">
-          <label for="procoreNumber">Procore #</label>
-          <input type="text" id="procoreNumber" name="procoreNumber" />
-        </div>
       </fieldset>
 
       <fieldset class="card">
@@ -281,8 +267,22 @@
       </fieldset>
 
       <fieldset class="card">
-        <h2 class="card-title">Additional Office Binder Needs</h2>
-        <p class="hint" style="margin:-0.4rem 0 1rem;">Mark each item and attach the document if you have it. Add or remove items as needed.</p>
+        <h2 class="card-title">Paperwork</h2>
+        <div class="row2">
+          <div class="field">
+            <label for="contractNumber">Contract Number</label>
+            <input type="text" id="contractNumber" name="contractNumber" />
+          </div>
+          <div class="field">
+            <label for="quickbooksInvoice">QuickBooks Invoice Number</label>
+            <input type="text" id="quickbooksInvoice" name="quickbooksInvoice" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="procoreNumber">Procore Number</label>
+          <input type="text" id="procoreNumber" name="procoreNumber" />
+        </div>
+        <p class="hint" style="margin:0.4rem 0 1rem;">Mark each document, attach the file (contract and any other documents), and add or remove items as needed.</p>
         <div class="statuslist" id="binderChecks"></div>
         <button type="button" class="action secondary" id="addBinderItem" style="margin-top:0.85rem;">+ Add item</button>
       </fieldset>
@@ -415,10 +415,7 @@
         overview: {
           project: f.project.value.trim(),
           projectId: f.projectId.value.trim(),
-          projectAddress: f.projectAddress.value.trim(),
-          contractNumber: f.contractNumber.value.trim(),
-          quickbooks: f.quickbooks.value.trim(),
-          procoreNumber: f.procoreNumber.value.trim()
+          projectAddress: f.projectAddress.value.trim()
         },
         timeSchedule: {
           estimatedStartDate: f.startDate.value,
@@ -428,6 +425,11 @@
           billingFrequency: f.billingFrequency.value.trim(),
           paymentTerms: f.paymentTerms.value.trim(),
           schedule: f.billingSchedule.value.trim()
+        },
+        paperwork: {
+          contractNumber: f.contractNumber.value.trim(),
+          quickbooksInvoice: f.quickbooksInvoice.value.trim(),
+          procoreNumber: f.procoreNumber.value.trim()
         },
         officeBinderNeeds: collectStatus("binder"),
         otherBinders: collectStatus("other"),
@@ -458,6 +460,7 @@
       }).join("\n") : "—";
       const dept = (label, x) => label + ": " + (x.name || "—") + " — Phone: " + (x.phone || "—") + " | Email: " + (x.email || "—") + " | Availability: " + (x.availability || "—");
       const inv = d.invoicing || {};
+      const pw = d.paperwork || {};
       return [
         "KICKOFF CHECKLIST", "",
         "Contact Information",
@@ -469,10 +472,7 @@
         "Overview",
         "Project: " + (d.overview.project || "—"),
         "Project ID #: " + (d.overview.projectId || "—"),
-        "Project Address: " + (d.overview.projectAddress || "—"),
-        "Contract #: " + (d.overview.contractNumber || "—"),
-        "QuickBooks #: " + (d.overview.quickbooks || "—"),
-        "Procore #: " + (d.overview.procoreNumber || "—"), "",
+        "Project Address: " + (d.overview.projectAddress || "—"), "",
         "Time Schedule",
         "Estimated Start Date: " + (d.timeSchedule.estimatedStartDate || "—"),
         "Estimated Duration: " + (d.timeSchedule.estimatedDuration || "—"), "",
@@ -480,7 +480,11 @@
         "Billing Frequency: " + (inv.billingFrequency || "—"),
         "Payment Terms: " + (inv.paymentTerms || "—"),
         "Schedule for Billing: " + (inv.schedule || "—"), "",
-        "Additional Office Binder Needs", statusList(d.officeBinderNeeds), "",
+        "Paperwork",
+        "Contract Number: " + (pw.contractNumber || "—"),
+        "QuickBooks Invoice Number: " + (pw.quickbooksInvoice || "—"),
+        "Procore Number: " + (pw.procoreNumber || "—"),
+        statusList(d.officeBinderNeeds), "",
         "Other – Binders", statusList(d.otherBinders), "",
         "Hand-off Meeting",
         "Who: " + (d.handoffMeeting.who || "—"),
