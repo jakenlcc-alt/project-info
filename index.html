@@ -131,7 +131,7 @@
           </div>
         </div>
         <div class="contact-group">
-          <div class="contact-role">Builder POC</div>
+          <div class="contact-role">Builder</div>
           <div class="field">
             <label for="builderName">Name</label>
             <input type="text" id="builderName" name="builderName" />
@@ -146,9 +146,17 @@
               <input type="email" id="builderEmail" name="builderEmail" />
             </div>
           </div>
+          <div class="field">
+            <label for="builderAvail">Availability</label>
+            <input type="text" id="builderAvail" name="builderAvail" placeholder="e.g. Mon-Fri 7a-4p" />
+          </div>
         </div>
         <div class="contact-group">
           <div class="contact-role">Superintendent</div>
+          <div class="field">
+            <label for="superName">Name</label>
+            <input type="text" id="superName" name="superName" />
+          </div>
           <div class="row2">
             <div class="field">
               <label for="superPhone">Phone</label>
@@ -159,9 +167,17 @@
               <input type="email" id="superEmail" name="superEmail" />
             </div>
           </div>
+          <div class="field">
+            <label for="superAvail">Availability</label>
+            <input type="text" id="superAvail" name="superAvail" placeholder="e.g. Mon-Fri 7a-4p" />
+          </div>
         </div>
         <div class="contact-group">
           <div class="contact-role">Project Manager</div>
+          <div class="field">
+            <label for="pmName">Name</label>
+            <input type="text" id="pmName" name="pmName" />
+          </div>
           <div class="row2">
             <div class="field">
               <label for="pmPhone">Phone</label>
@@ -172,9 +188,17 @@
               <input type="email" id="pmEmail" name="pmEmail" />
             </div>
           </div>
+          <div class="field">
+            <label for="pmAvail">Availability</label>
+            <input type="text" id="pmAvail" name="pmAvail" placeholder="e.g. Mon-Fri 7a-4p" />
+          </div>
         </div>
         <div class="contact-group">
           <div class="contact-role">Accounting Department</div>
+          <div class="field">
+            <label for="acctName">Name</label>
+            <input type="text" id="acctName" name="acctName" />
+          </div>
           <div class="row2">
             <div class="field">
               <label for="acctPhone">Phone</label>
@@ -184,6 +208,10 @@
               <label for="acctEmail">Email</label>
               <input type="email" id="acctEmail" name="acctEmail" />
             </div>
+          </div>
+          <div class="field">
+            <label for="acctAvail">Availability</label>
+            <input type="text" id="acctAvail" name="acctAvail" placeholder="e.g. Mon-Fri 7a-4p" />
           </div>
         </div>
       </fieldset>
@@ -379,10 +407,10 @@
       return {
         contacts: {
           companyAddress: f.companyAddress.value.trim(),
-          builderPoc: { name: f.builderName.value.trim(), phone: f.builderPhone.value.trim(), email: f.builderEmail.value.trim() },
-          superintendent: { phone: f.superPhone.value.trim(), email: f.superEmail.value.trim() },
-          projectManager: { phone: f.pmPhone.value.trim(), email: f.pmEmail.value.trim() },
-          accounting: { phone: f.acctPhone.value.trim(), email: f.acctEmail.value.trim() }
+          builder: { name: f.builderName.value.trim(), phone: f.builderPhone.value.trim(), email: f.builderEmail.value.trim(), availability: f.builderAvail.value.trim() },
+          superintendent: { name: f.superName.value.trim(), phone: f.superPhone.value.trim(), email: f.superEmail.value.trim(), availability: f.superAvail.value.trim() },
+          projectManager: { name: f.pmName.value.trim(), phone: f.pmPhone.value.trim(), email: f.pmEmail.value.trim(), availability: f.pmAvail.value.trim() },
+          accounting: { name: f.acctName.value.trim(), phone: f.acctPhone.value.trim(), email: f.acctEmail.value.trim(), availability: f.acctAvail.value.trim() }
         },
         overview: {
           project: f.project.value.trim(),
@@ -428,16 +456,16 @@
         const files = (x.files && x.files.length) ? "  [files: " + x.files.join(", ") + "]" : "";
         return "• " + x.item + ": " + statusLabel(x.status) + files;
       }).join("\n") : "—";
-      const contact = (x) => "Phone: " + (x.phone || "—") + " | Email: " + (x.email || "—");
+      const dept = (label, x) => label + ": " + (x.name || "—") + " — Phone: " + (x.phone || "—") + " | Email: " + (x.email || "—") + " | Availability: " + (x.availability || "—");
       const inv = d.invoicing || {};
       return [
         "KICKOFF CHECKLIST", "",
         "Contact Information",
         "Company Address: " + (c.companyAddress || "—"),
-        "Builder POC: " + (c.builderPoc.name || "—") + " — " + contact(c.builderPoc),
-        "Superintendent — " + contact(c.superintendent),
-        "Project Manager — " + contact(c.projectManager),
-        "Accounting — " + contact(c.accounting), "",
+        dept("Builder", c.builder),
+        dept("Superintendent", c.superintendent),
+        dept("Project Manager", c.projectManager),
+        dept("Accounting", c.accounting), "",
         "Overview",
         "Project: " + (d.overview.project || "—"),
         "Project ID #: " + (d.overview.projectId || "—"),
@@ -463,10 +491,10 @@
     // Contact block for the board's "Contact Information" column.
     function buildContactInfo(d) {
       const c = d.contacts;
-      const line = (label, x) => label + " — Phone: " + (x.phone || "—") + ", Email: " + (x.email || "—");
+      const line = (label, x) => label + ": " + (x.name || "—") + " — Phone: " + (x.phone || "—") + ", Email: " + (x.email || "—") + ", Availability: " + (x.availability || "—");
       return [
         "Company Address: " + (c.companyAddress || "—"),
-        "Builder POC: " + (c.builderPoc.name || "—") + " — Phone: " + (c.builderPoc.phone || "—") + ", Email: " + (c.builderPoc.email || "—"),
+        line("Builder", c.builder),
         line("Superintendent", c.superintendent),
         line("Project Manager", c.projectManager),
         line("Accounting", c.accounting)
