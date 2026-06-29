@@ -464,6 +464,14 @@
     // Existing monday board cloned for each new project (the template).
     // Number from the board URL: https://<account>.monday.com/boards/XXXXXXXXX
     const TEMPLATE_BOARD_ID = "18405661261";
+    // Column titles the Dashboard reads (by title) off the new board's Project
+    // Info item to build the Supabase `projects` row. These titles are the
+    // integration contract; Project ID # also marks the board as a project.
+    const PROJECT_FIELD_COLUMNS = [
+      { title: "Project ID #",    value: (d) => d.overview.projectId },
+      { title: "Site Address",    value: (d) => d.overview.projectAddress },
+      { title: "Estimated Start", value: (d) => d.timeSchedule.estimatedStartDate },
+    ];
 
     // Readable summary of the checklist, posted to the item's Updates feed.
     function buildSummary(d) {
@@ -550,6 +558,28 @@
       );
     }
 
+    // Write the machine-readable project fields (Project ID #, Site Address,
+    // Estimated Start) onto the new board's item. The Dashboard reads these BY
+    // TITLE to build the Supabase `projects` row, keyed on Project ID #.
+    async function writeProjectFields(boardId, itemId, data) {
+      const vals = {};
+      for (const f of PROJECT_FIELD_COLUMNS) {
+        const col = await mondayQuery(
+          "mutation ($boardId: ID!, $title: String!) {" +
+          "  create_column (board_id: $boardId, title: $title, column_type: text) { id }" +
+          "}",
+          { boardId: String(boardId), title: f.title }
+        );
+        vals[col.create_column.id] = f.value(data) || "";
+      }
+      await mondayQuery(
+        "mutation ($boardId: ID!, $itemId: ID!, $vals: JSON!) {" +
+        "  change_multiple_column_values (board_id: $boardId, item_id: $itemId, column_values: $vals) { id }" +
+        "}",
+        { boardId: String(boardId), itemId: String(itemId), vals: JSON.stringify(vals) }
+      );
+    }
+
     // Upload File objects to a file column on the item (multipart, via the Worker).
     async function uploadFiles(boardId, itemId, files) {
       const colId = (await mondayQuery(
@@ -606,7 +636,7 @@
         try {
           const r = await mondayQuery(
             "mutation ($boardId: ID!, $name: String!, $folder: ID!) {" +
-            "  duplicate_board (board_id: $boardId, duplicate_type: duplicate_board_with_structure, board_name: $name, folder_id: $folder) {" +
+            "  duplicate_board (board_id: $boardId, duplicate_type: duplicate_board_with_pulses, board_name: $name, folder_id: $folder) {" +
             "    board { id }" +
             "  }" +
             "}",
@@ -617,7 +647,7 @@
       }
       const r = await mondayQuery(
         "mutation ($boardId: ID!, $name: String!) {" +
-        "  duplicate_board (board_id: $boardId, duplicate_type: duplicate_board_with_structure, board_name: $name) {" +
+        "  duplicate_board (board_id: $boardId, duplicate_type: duplicate_board_with_pulses, board_name: $name) {" +
         "    board { id }" +
         "  }" +
         "}",
@@ -662,6 +692,8 @@
         // 4) Best-effort: Contact Information + Kick Off columns, and uploaded documents.
         let note = "";
         try {
+          // Project registry fields the Dashboard reads → Supabase `projects`.
+          await writeProjectFields(newBoardId, itemId, data);
           await removeResourcesColumn(newBoardId);
           await addTextColumn(newBoardId, itemId, "Contact Information", buildContactInfo(data));
           await addTextColumn(newBoardId, itemId, "Kick Off", buildSummary(data));
