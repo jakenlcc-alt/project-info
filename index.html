@@ -178,9 +178,21 @@
           </div>
         </div>
         <div class="field">
-          <label for="builderName">Builder <span class="req">*</span></label>
+          <label for="builderName">Builder Name <span class="req">*</span></label>
           <input type="text" id="builderName" name="builderName" />
           <div class="req-error">Required</div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="builderPhone">Builder Phone <span class="req">*</span></label>
+            <input type="tel" id="builderPhone" name="builderPhone" />
+            <div class="req-error">Required</div>
+          </div>
+          <div class="field">
+            <label for="builderEmail">Builder Email <span class="req">*</span></label>
+            <input type="email" id="builderEmail" name="builderEmail" />
+            <div class="req-error">Required</div>
+          </div>
         </div>
         <div class="field">
           <label for="estimateNumber">Estimate # <span class="req">*</span></label>
@@ -221,23 +233,6 @@
           <div class="field">
             <label for="companyAddress">Address</label>
             <input type="text" id="companyAddress" name="companyAddress" />
-          </div>
-        </div>
-        <div class="contact-group">
-          <div class="contact-role">Builder <span class="hint">(name in Required Info above)</span></div>
-          <div class="row2">
-            <div class="field">
-              <label for="builderPhone">Phone</label>
-              <input type="tel" id="builderPhone" name="builderPhone" />
-            </div>
-            <div class="field">
-              <label for="builderEmail">Email</label>
-              <input type="email" id="builderEmail" name="builderEmail" />
-            </div>
-          </div>
-          <div class="field">
-            <label for="builderAvail">Availability</label>
-            <input type="text" id="builderAvail" name="builderAvail" placeholder="e.g. Mon-Fri 7a-4p" />
           </div>
         </div>
         <div class="contact-group">
@@ -437,7 +432,7 @@
     });
 
     // ---- Required-field validation ----
-    const REQUIRED = ["project", "projectAddress", "contractAmount", "prevailingWage", "builderName", "estimateNumber", "formOfBilling", "startDate", "duration"];
+    const REQUIRED = ["project", "projectAddress", "contractAmount", "prevailingWage", "builderName", "builderPhone", "builderEmail", "estimateNumber", "formOfBilling", "startDate", "duration"];
     function validateRequired() {
       let firstInvalid = null;
       REQUIRED.forEach(id => {
@@ -513,7 +508,7 @@
       return {
         contacts: {
           companyAddress: f.companyAddress.value.trim(),
-          builder: { name: f.builderName.value.trim(), phone: f.builderPhone.value.trim(), email: f.builderEmail.value.trim(), availability: f.builderAvail.value.trim() },
+          builder: { name: f.builderName.value.trim(), phone: f.builderPhone.value.trim(), email: f.builderEmail.value.trim() },
           superintendent: { name: f.superName.value.trim(), phone: f.superPhone.value.trim(), email: f.superEmail.value.trim(), availability: f.superAvail.value.trim() },
           projectManager: { name: f.pmName.value.trim(), phone: f.pmPhone.value.trim(), email: f.pmEmail.value.trim(), availability: f.pmAvail.value.trim() },
           accounting: { name: f.acctName.value.trim(), phone: f.acctPhone.value.trim(), email: f.acctEmail.value.trim(), availability: f.acctAvail.value.trim() }
