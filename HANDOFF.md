@@ -18,18 +18,18 @@ project fields that a **Supabase-backed Dashboard** reads. Installable **PWA**.
   pushing, or you'll collide. Consider consolidating to one session.
 
 ## Form sections (top to bottom)
-1. **Required Info** — 9 required fields; Submit is blocked until all are filled (inline
+1. **Required Info** — 11 required fields; Submit is blocked until all are filled (inline
    "Required" errors, scroll-to + focus first empty, clears on input):
    - Jobsite Name `#project` · Jobsite Address `#projectAddress`
    - Contract Amount ($) `#contractAmount` · Prevailing Wage (Yes/No) `#prevailingWage`
-   - Builder `#builderName`
+   - Builder Name `#builderName` · Builder Phone `#builderPhone` · Builder Email `#builderEmail`
    - Estimate # `#estimateNumber`
    - Form of Billing (**Invoice / AIA**) `#formOfBilling`
    - Estimated Start Date `#startDate` · Estimated Duration `#duration`
    - Estimated End Date `#endDatePreview` — **read-only, auto-calculated** from start + duration
      (parses days/weeks/months/years); not a required input.
-2. **Contact Information:** Company Address; Builder (Phone/Email/Availability — name is in
-   Required Info); Superintendent, Project Manager, Accounting (each Name/Phone/Email/Availability).
+2. **Contact Information:** Company Address; Superintendent, Project Manager, Accounting
+   (each Name / Phone / Email on one row + Availability). *(Builder moved to Required Info.)*
 3. **Overview:** Project ID # `#projectId`.
 4. **Invoicing:** Billing Frequency, Payment Terms, Schedule for Billing.
 5. **Paperwork:** QuickBooks Invoice Number, Procore Number; editable checklist (Completed/Not
@@ -42,8 +42,8 @@ Buttons: **Submit** + **Preview data** (dumps collected JSON).
 
 ## `collect()` data shape
 ```
-contacts:   { companyAddress, builder:{name,phone,email,availability}, superintendent:{…},
-              projectManager:{…}, accounting:{…} }
+contacts:   { companyAddress, builder:{name,phone,email},
+              superintendent:{name,phone,email,availability}, projectManager:{…}, accounting:{…} }
 overview:   { project, projectId, projectAddress, prevailingWage }
 timeSchedule:{ estimatedStartDate, estimatedDuration, estimatedEndDate(computed) }
 invoicing:  { estimateNumber, formOfBilling, billingFrequency, paymentTerms, schedule }

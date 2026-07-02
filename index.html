@@ -80,6 +80,7 @@
     textarea { resize: vertical; min-height: 72px; }
 
     .row2 { display: grid; gap: 1rem 1.25rem; grid-template-columns: 1fr 1fr; }
+    .row3 { display: grid; gap: 1rem 1.25rem; grid-template-columns: 1fr 1fr 1fr; }
 
     /* Contact role groups */
     .contact-role { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.55rem; color: var(--accent); }
@@ -118,7 +119,7 @@
 
     @media (max-width: 640px) {
       body { padding: 1.25rem 0.85rem calc(3rem + env(safe-area-inset-bottom)); }
-      .row2 { grid-template-columns: 1fr; }
+      .row2, .row3 { grid-template-columns: 1fr; }
       .card { padding: 1.1rem 1.1rem 1.25rem; }
       header.page h1 { font-size: 1.6rem; }
       .actions { flex-direction: column; align-items: stretch; }
@@ -237,11 +238,11 @@
         </div>
         <div class="contact-group">
           <div class="contact-role">Superintendent</div>
-          <div class="field">
-            <label for="superName">Name</label>
-            <input type="text" id="superName" name="superName" />
-          </div>
-          <div class="row2">
+          <div class="row3">
+            <div class="field">
+              <label for="superName">Name</label>
+              <input type="text" id="superName" name="superName" />
+            </div>
             <div class="field">
               <label for="superPhone">Phone</label>
               <input type="tel" id="superPhone" name="superPhone" />
@@ -258,11 +259,11 @@
         </div>
         <div class="contact-group">
           <div class="contact-role">Project Manager</div>
-          <div class="field">
-            <label for="pmName">Name</label>
-            <input type="text" id="pmName" name="pmName" />
-          </div>
-          <div class="row2">
+          <div class="row3">
+            <div class="field">
+              <label for="pmName">Name</label>
+              <input type="text" id="pmName" name="pmName" />
+            </div>
             <div class="field">
               <label for="pmPhone">Phone</label>
               <input type="tel" id="pmPhone" name="pmPhone" />
@@ -279,11 +280,11 @@
         </div>
         <div class="contact-group">
           <div class="contact-role">Accounting Department</div>
-          <div class="field">
-            <label for="acctName">Name</label>
-            <input type="text" id="acctName" name="acctName" />
-          </div>
-          <div class="row2">
+          <div class="row3">
+            <div class="field">
+              <label for="acctName">Name</label>
+              <input type="text" id="acctName" name="acctName" />
+            </div>
             <div class="field">
               <label for="acctPhone">Phone</label>
               <input type="tel" id="acctPhone" name="acctPhone" />
