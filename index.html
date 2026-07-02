@@ -126,6 +126,16 @@
       #status { text-align: center; }
       .status-btn { padding: 0.5rem 0.95rem; }
     }
+
+    /* Required Info section + validation */
+    .card.required { border-color: #cfe0ff; box-shadow: 0 0 0 3px rgba(31,111,235,0.06); }
+    .req { color: var(--red); }
+    select { width: 100%; padding: 0.6rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 16px; color: var(--ink); background: #fbfcfd; }
+    select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    .req-error { display: none; color: var(--red-ink); font-size: 0.8rem; margin-top: 0.3rem; font-weight: 600; }
+    .field.invalid > input, .field.invalid > select { border-color: var(--red); background: #fff6f6; }
+    .field.invalid .req-error { display: block; }
+    #status.err { color: var(--red-ink); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -136,6 +146,71 @@
     </header>
 
     <form id="kickoff">
+      <fieldset class="card required">
+        <h2 class="card-title">Required Info</h2>
+        <p class="hint" style="margin:-0.4rem 0 1rem;">All fields in this section are required to submit.</p>
+        <div class="row2">
+          <div class="field">
+            <label for="project">Jobsite Name <span class="req">*</span></label>
+            <input type="text" id="project" name="project" />
+            <div class="req-error">Required</div>
+          </div>
+          <div class="field">
+            <label for="projectAddress">Jobsite Address <span class="req">*</span></label>
+            <input type="text" id="projectAddress" name="projectAddress" />
+            <div class="req-error">Required</div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="contractAmount">Contract Amount ($) <span class="req">*</span></label>
+            <input type="number" id="contractAmount" name="contractAmount" min="0" step="0.01" />
+            <div class="req-error">Required</div>
+          </div>
+          <div class="field">
+            <label for="prevailingWage">Prevailing Wage <span class="req">*</span></label>
+            <select id="prevailingWage" name="prevailingWage">
+              <option value="">— Select —</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+            <div class="req-error">Required</div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="builderName">Builder <span class="req">*</span></label>
+            <input type="text" id="builderName" name="builderName" />
+            <div class="req-error">Required</div>
+          </div>
+          <div class="field">
+            <label for="formOfBilling">Form of Billing <span class="req">*</span></label>
+            <select id="formOfBilling" name="formOfBilling">
+              <option value="">— Select —</option>
+              <option>Lump Sum</option>
+              <option>Time &amp; Materials</option>
+              <option>Cost Plus</option>
+              <option>Progress Billing (AIA)</option>
+              <option>Unit Price</option>
+              <option>Other</option>
+            </select>
+            <div class="req-error">Required</div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="startDate">Estimated Start Date <span class="req">*</span></label>
+            <input type="date" id="startDate" name="startDate" />
+            <div class="req-error">Required</div>
+          </div>
+          <div class="field">
+            <label for="endDate">Estimated End Date <span class="req">*</span></label>
+            <input type="date" id="endDate" name="endDate" />
+            <div class="req-error">Required</div>
+          </div>
+        </div>
+      </fieldset>
+
       <fieldset class="card">
         <h2 class="card-title">Contact Information</h2>
         <div class="contact-group">
@@ -146,11 +221,7 @@
           </div>
         </div>
         <div class="contact-group">
-          <div class="contact-role">Builder</div>
-          <div class="field">
-            <label for="builderName">Name</label>
-            <input type="text" id="builderName" name="builderName" />
-          </div>
+          <div class="contact-role">Builder <span class="hint">(name in Required Info above)</span></div>
           <div class="row2">
             <div class="field">
               <label for="builderPhone">Phone</label>
@@ -233,33 +304,17 @@
 
       <fieldset class="card">
         <h2 class="card-title">Overview</h2>
-        <div class="row2">
-          <div class="field">
-            <label for="project">Project</label>
-            <input type="text" id="project" name="project" />
-          </div>
-          <div class="field">
-            <label for="projectId">Project ID #</label>
-            <input type="text" id="projectId" name="projectId" />
-          </div>
-        </div>
         <div class="field">
-          <label for="projectAddress">Project Address</label>
-          <input type="text" id="projectAddress" name="projectAddress" />
+          <label for="projectId">Project ID #</label>
+          <input type="text" id="projectId" name="projectId" />
         </div>
       </fieldset>
 
       <fieldset class="card">
         <h2 class="card-title">Time Schedule</h2>
-        <div class="row2">
-          <div class="field">
-            <label for="startDate">Estimated Start Date</label>
-            <input type="date" id="startDate" name="startDate" />
-          </div>
-          <div class="field">
-            <label for="duration">Estimated Duration</label>
-            <input type="text" id="duration" name="duration" placeholder="e.g. 6 weeks" />
-          </div>
+        <div class="field">
+          <label for="duration">Estimated Duration <span class="hint">(optional)</span></label>
+          <input type="text" id="duration" name="duration" placeholder="e.g. 6 weeks" />
         </div>
       </fieldset>
 
@@ -390,6 +445,27 @@
       );
     });
 
+    // ---- Required-field validation ----
+    const REQUIRED = ["project", "projectAddress", "contractAmount", "prevailingWage", "builderName", "formOfBilling", "startDate", "endDate"];
+    function validateRequired() {
+      let firstInvalid = null;
+      REQUIRED.forEach(id => {
+        const el = document.getElementById(id);
+        const field = el.closest(".field");
+        const empty = !el.value || !el.value.trim();
+        field.classList.toggle("invalid", empty);
+        if (empty && !firstInvalid) firstInvalid = el;
+      });
+      return firstInvalid;
+    }
+    // Clear a field's error as soon as the user fills it.
+    REQUIRED.forEach(id => {
+      const el = document.getElementById(id);
+      const clear = () => { if (el.value && el.value.trim()) el.closest(".field").classList.remove("invalid"); };
+      el.addEventListener("input", clear);
+      el.addEventListener("change", clear);
+    });
+
     // Read a row's item name from its editable input (custom rows) or stored value.
     function rowItemName(r) {
       const input = r.querySelector(".status-name-input");
@@ -430,18 +506,22 @@
         overview: {
           project: f.project.value.trim(),
           projectId: f.projectId.value.trim(),
-          projectAddress: f.projectAddress.value.trim()
+          projectAddress: f.projectAddress.value.trim(),
+          prevailingWage: f.prevailingWage.value
         },
         timeSchedule: {
           estimatedStartDate: f.startDate.value,
+          estimatedEndDate: f.endDate.value,
           estimatedDuration: f.duration.value.trim()
         },
         invoicing: {
+          formOfBilling: f.formOfBilling.value,
           billingFrequency: f.billingFrequency.value.trim(),
           paymentTerms: f.paymentTerms.value.trim(),
           schedule: f.billingSchedule.value.trim()
         },
         paperwork: {
+          contractAmount: f.contractAmount.value.trim(),
           contractNumber: f.contractNumber.value.trim(),
           quickbooksInvoice: f.quickbooksInvoice.value.trim(),
           procoreNumber: f.procoreNumber.value.trim()
@@ -493,17 +573,21 @@
         dept("Project Manager", c.projectManager),
         dept("Accounting", c.accounting), "",
         "Overview",
-        "Project: " + (d.overview.project || "—"),
+        "Jobsite Name: " + (d.overview.project || "—"),
         "Project ID #: " + (d.overview.projectId || "—"),
-        "Project Address: " + (d.overview.projectAddress || "—"), "",
+        "Jobsite Address: " + (d.overview.projectAddress || "—"),
+        "Prevailing Wage: " + (d.overview.prevailingWage || "—"), "",
         "Time Schedule",
         "Estimated Start Date: " + (d.timeSchedule.estimatedStartDate || "—"),
+        "Estimated End Date: " + (d.timeSchedule.estimatedEndDate || "—"),
         "Estimated Duration: " + (d.timeSchedule.estimatedDuration || "—"), "",
         "Invoicing",
+        "Form of Billing: " + (inv.formOfBilling || "—"),
         "Billing Frequency: " + (inv.billingFrequency || "—"),
         "Payment Terms: " + (inv.paymentTerms || "—"),
         "Schedule for Billing: " + (inv.schedule || "—"), "",
         "Paperwork",
+        "Contract Amount: " + (pw.contractAmount ? "$" + pw.contractAmount : "—"),
         "Contract Number: " + (pw.contractNumber || "—"),
         "QuickBooks Invoice Number: " + (pw.quickbooksInvoice || "—"),
         "Procore Number: " + (pw.procoreNumber || "—"),
@@ -660,6 +744,18 @@
       e.preventDefault();
       const status = document.getElementById("status");
       const out = document.getElementById("output");
+
+      // Block submit until every required field is filled.
+      const firstInvalid = validateRequired();
+      if (firstInvalid) {
+        firstInvalid.closest(".field").scrollIntoView({ behavior: "smooth", block: "center" });
+        firstInvalid.focus({ preventScroll: true });
+        status.className = "err";
+        status.textContent = "Please complete all required fields.";
+        return;
+      }
+      status.className = "";
+
       const data = collect();
 
       if (!SUBMIT_URL || !TEMPLATE_BOARD_ID) {
@@ -668,7 +764,6 @@
         status.textContent = "TEMPLATE_BOARD_ID not set — showing data below.";
         return;
       }
-      if (!data.overview.project) { status.textContent = "Enter a Project name first."; return; }
 
       status.textContent = "Creating board in monday…";
       try {
