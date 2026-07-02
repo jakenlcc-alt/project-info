@@ -1,81 +1,88 @@
 # Project Handoff — `project-info` Kickoff Checklist app
 
-A self-contained brief for picking up this project in a new session.
+A self-contained brief for picking up this project in a new session. Reflects the current
+`main` (the app has evolved a lot — read this, not old assumptions).
 
 ## What this is
-A single-page **Kickoff Checklist** intake form for a construction company. On submit it
-creates a project workspace in **monday.com** via a Cloudflare Worker. Built from a Word doc
-("Kickoff Check list").
+A single-page **Kickoff Checklist** intake form for a construction company. On Submit it
+duplicates a monday.com board (via a Cloudflare Worker) into an "Active Jobs" folder and writes
+project fields that a **Supabase-backed Dashboard** reads. Installable **PWA**.
 
-## Repo / branch / deploy
-- **GitHub repo:** `jakenlcc-alt/project-info` (scope your session to this repo)
-- **Work branch:** `claude/upbeat-mayer-uvzvne` (also fast-forward `main` and push both)
-- **Deploy:** Netlify, auto-deploys from `main` on push. Live: https://nlc2projectinfo.netlify.app/
-- **Whole app is ONE file:** `index.html` (self-contained, inline CSS/JS, no build step).
-- **Git pattern used each change:** commit on `claude/…` → `git branch -f main HEAD` → push both.
+## Repo / deploy
+- **GitHub repo:** `jakenlcc-alt/project-info`
+- **Deploy:** Netlify, auto-deploys from **`main`** on push. Live: https://nlc2projectinfo.netlify.app/
+- **App is ONE file:** `index.html` (self-contained inline CSS/JS, no build step) + PWA assets
+  (`manifest.webmanifest`, `icon.svg`, `icon-192.png`, `icon-512.png`, `favicon-32.png`,
+  `apple-touch-icon.png`).
+- **⚠️ Two sessions push to `main`.** Always `git fetch origin main` and pull/rebase before
+  pushing, or you'll collide. Consider consolidating to one session.
 
 ## Form sections (top to bottom)
-1. **Contact Information** (top): Builder POC (free text); Superintendent, Project Manager,
-   Accounting Department — each Phone + Email.
-2. **Overview:** Project, Project ID #, Builder.
-3. **Time Schedule:** Estimated Start Date, Estimated Duration.
-4. **Invoicing** (textarea).
-5. **Resources:** Material ordering, What supplier(s), Material quotes, Equipment needs, Manpower.
-6. **Additional Office Binder Needs:** 13 items, each with a green **Completed** / red
-   **Not Complete** toggle (solid = selected, outline = not, tap active to clear) + a file upload.
-7. **Other – Binders:** "Safety Plan Binder" (same toggle + upload).
-8. **Hand-off Meeting:** Who, Date.
+1. **Required Info** — 9 required fields; Submit is blocked until all are filled (inline
+   "Required" errors, scroll-to + focus first empty, clears on input):
+   - Jobsite Name `#project` · Jobsite Address `#projectAddress`
+   - Contract Amount ($) `#contractAmount` · Prevailing Wage (Yes/No) `#prevailingWage`
+   - Builder `#builderName`
+   - Estimate # `#estimateNumber`
+   - Form of Billing (**Invoice / AIA**) `#formOfBilling`
+   - Estimated Start Date `#startDate` · Estimated Duration `#duration`
+   - Estimated End Date `#endDatePreview` — **read-only, auto-calculated** from start + duration
+     (parses days/weeks/months/years); not a required input.
+2. **Contact Information:** Company Address; Builder (Phone/Email/Availability — name is in
+   Required Info); Superintendent, Project Manager, Accounting (each Name/Phone/Email/Availability).
+3. **Overview:** Project ID # `#projectId`.
+4. **Invoicing:** Billing Frequency, Payment Terms, Schedule for Billing.
+5. **Paperwork:** QuickBooks Invoice Number, Procore Number; editable checklist (Completed/Not
+   Complete toggle + file upload, "+ Add item"). *(Contract Number was removed — replaced by
+   Contract Amount in Required Info.)*
+6. **Other – Binders:** Safety Plan Binder (toggle + upload).
+7. **Hand-off Meeting:** Who, Date.
 
 Buttons: **Submit** + **Preview data** (dumps collected JSON).
 
-## monday integration (in `index.html`)
-- `SUBMIT_URL = https://monday-token-keeper.jake-nlcc.workers.dev`
-- `TEMPLATE_BOARD_ID = 18405661261`
-- The Worker (**monday-token-keeper**) is a **generic monday GraphQL proxy**: it injects the
-  monday token and forwards the POST body to `https://api.monday.com/v2`. CORS is `*`.
-  - JSON body → expects `{ query, variables }` (GraphQL) → forwarded to `/v2`
-  - multipart → forwarded to `/v2/file` (file uploads; use field `variables[file]`)
-- On Submit the form does:
-  1. `duplicate_board(board_id: TEMPLATE_BOARD_ID, duplicate_type: duplicate_board_with_structure_and_items, board_name: <Project>)` → new board
-  2. `create_item(new board, "Project Info – <Project>")`
-  3. `create_update(item, full checklist summary)` — guaranteed data capture
-  4. **best-effort:** create long_text columns **Contact Information** + **Kick Off** and set them;
-     create a file column **Documents** and `add_file_to_column` for each uploaded file.
+## `collect()` data shape
+```
+contacts:   { companyAddress, builder:{name,phone,email,availability}, superintendent:{…},
+              projectManager:{…}, accounting:{…} }
+overview:   { project, projectId, projectAddress, prevailingWage }
+timeSchedule:{ estimatedStartDate, estimatedDuration, estimatedEndDate(computed) }
+invoicing:  { estimateNumber, formOfBilling, billingFrequency, paymentTerms, schedule }
+paperwork:  { contractAmount, quickbooksInvoice, procoreNumber }
+officeBinderNeeds:[{item,status,files[]}], otherBinders:[…], handoffMeeting:{who,date}, submittedAt
+```
 
-## ⚠️ Critical blocker — monday is UNTESTED
-The monday flow has **never run successfully** — Claude could not reach monday from the sandbox:
-- The **sandbox network policy blocks all outbound hosts except `github.com`** (everything else
-  returns `403 host_not_allowed` at the egress proxy — the Netlify site, the Worker, and
-  `api.monday.com`).
-- The **monday MCP connector is not authorized** (`403 MCP_AGENT_NOT_AUTHORIZED` — account admin
-  must enable **monday AI** + **Public Hosted MCP**).
+## monday + Supabase flow (on Submit, in `index.html`)
+- `SUBMIT_URL = https://monday-token-keeper.jake-nlcc.workers.dev` — generic monday GraphQL proxy
+  (injects the token; CORS `*`; JSON `{query,variables}` → `/v2`, multipart `variables[file]` → `/v2/file`).
+- `TEMPLATE_BOARD_ID = 18405661261`.
+1. `findActiveJobsFolder()` → `duplicateTemplate()` — `duplicate_board_with_pulses` into the
+   "Active Jobs" folder (falls back to default placement).
+2. `create_item` "Project Info – <Jobsite Name>".
+3. `create_update` with the full checklist summary.
+4. `writeProjectFields()` — **INTEGRATION CONTRACT:** creates text columns titled **`Project ID #`**,
+   **`Site Address`** (=projectAddress), **`Estimated Start`** (=startDate) and sets them; the
+   Dashboard reads these **by title** to build the Supabase `projects` row, keyed on Project ID #.
+   **Do not rename/remove these, or the ids `project`/`projectId`/`projectAddress`/`startDate`.**
+5. best-effort: `removeResourcesColumn`, `addTextColumn` "Contact Information" + "Kick Off",
+   `uploadFiles` → "Documents" file column.
 
-**To unblock (either one):**
-- Add `monday-token-keeper.jake-nlcc.workers.dev` (and optionally `api.monday.com`) to **this
-  environment's network allowlist** (Claude Code on the web → environment network policy; may
-  need a fresh session to take effect). Then test by POSTing to the Worker.
-- **OR** enable the **monday MCP** on the account (separate channel, not affected by the firewall).
+## ⚠️ Testing constraint
+The monday/Supabase submit path can't be exercised from the sandbox: outbound network is blocked
+to everything except `github.com` (`403 host_not_allowed` for the Worker + `api.monday.com`), and
+the monday MCP is unauthorized (`403 MCP_AGENT_NOT_AUTHORIZED`). All **client-side** logic
+(validation, end-date calc, collect() shape) is verifiable locally; the **board-creation path is
+not**. To let Claude test it: add `monday-token-keeper.jake-nlcc.workers.dev` (+ `api.monday.com`)
+to the environment's network allowlist, OR enable monday AI + Public Hosted MCP. Otherwise test
+via a real browser Submit and read the status line.
 
-**Likely things to verify/fix once reachable:** the `duplicate_board` enum, the long_text value
-format (`change_simple_column_value` uses a plain string), and the multipart file upload
-(`variables[file]` → `add_file_to_column`).
-
-## Open design decisions (waiting on user)
-- How to **break out documents and contacts inside monday**. Currently all docs go to one
-  "Documents" column and all contacts to one "Contact Information" column; user wants them broken
-  out (likely a column or sub-item per document type / per contact). **Final structure TBD.**
+## Open decisions (waiting on user)
+- How to **break out documents and contacts inside monday / the Dashboard** (today: one
+  "Documents" column, one "Contact Information" column).
 - What the **Kick Off** column should hold (currently the full summary).
-- Confirm duplicate-board fully replaces the old single-item path (assumed yes).
-- Optional: add a **Name** field to each contact (offered, not yet added).
 
 ## Dev notes
-- Can't reach the live site from the sandbox (firewall). To verify layout, render `index.html`
-  locally with Playwright (installed):
+- Render locally to check layout (Playwright is installed):
   `npx playwright screenshot --full-page "file:///home/user/project-info/index.html" out.png`
-- Confirm no JS errors by loading the file in headless chromium and checking `pageerror`/console.
-
-## Immediate next step
-Confirm whether the network allowlist (or monday MCP) is now enabled.
-- **If yes:** POST a sample kickoff through the Worker (duplicate board `18405661261` → Project
-  Info item + columns), report exactly what monday returns, and fix anything broken.
-- **If no:** that's the blocker to resolve first.
+- Verify no JS errors + validation + `collect()` shape by loading in headless chromium and
+  calling `collect()` via `page.evaluate`.
+- Git: `git fetch origin main` first, then commit and push to `main`.
