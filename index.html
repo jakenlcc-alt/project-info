@@ -177,25 +177,24 @@
             <div class="req-error">Required</div>
           </div>
         </div>
-        <div class="row2">
-          <div class="field">
-            <label for="builderName">Builder <span class="req">*</span></label>
-            <input type="text" id="builderName" name="builderName" />
-            <div class="req-error">Required</div>
-          </div>
-          <div class="field">
-            <label for="formOfBilling">Form of Billing <span class="req">*</span></label>
-            <select id="formOfBilling" name="formOfBilling">
-              <option value="">— Select —</option>
-              <option>Lump Sum</option>
-              <option>Time &amp; Materials</option>
-              <option>Cost Plus</option>
-              <option>Progress Billing (AIA)</option>
-              <option>Unit Price</option>
-              <option>Other</option>
-            </select>
-            <div class="req-error">Required</div>
-          </div>
+        <div class="field">
+          <label for="builderName">Builder <span class="req">*</span></label>
+          <input type="text" id="builderName" name="builderName" />
+          <div class="req-error">Required</div>
+        </div>
+        <div class="field">
+          <label for="estimateNumber">Estimate # <span class="req">*</span></label>
+          <input type="text" id="estimateNumber" name="estimateNumber" />
+          <div class="req-error">Required</div>
+        </div>
+        <div class="field">
+          <label for="formOfBilling">Form of Billing <span class="req">*</span></label>
+          <select id="formOfBilling" name="formOfBilling">
+            <option value="">— Select —</option>
+            <option value="Invoice">Invoice</option>
+            <option value="AIA">AIA</option>
+          </select>
+          <div class="req-error">Required</div>
         </div>
         <div class="row2">
           <div class="field">
@@ -204,10 +203,14 @@
             <div class="req-error">Required</div>
           </div>
           <div class="field">
-            <label for="endDate">Estimated End Date <span class="req">*</span></label>
-            <input type="date" id="endDate" name="endDate" />
+            <label for="duration">Estimated Duration <span class="req">*</span></label>
+            <input type="text" id="duration" name="duration" placeholder="e.g. 6 weeks, 3 months" />
             <div class="req-error">Required</div>
           </div>
+        </div>
+        <div class="field">
+          <label for="endDatePreview">Estimated End Date <span class="hint">(calculated from start + duration)</span></label>
+          <input type="text" id="endDatePreview" readonly placeholder="—" style="background:#eef1f4; color:var(--muted);" />
         </div>
       </fieldset>
 
@@ -311,14 +314,6 @@
       </fieldset>
 
       <fieldset class="card">
-        <h2 class="card-title">Time Schedule</h2>
-        <div class="field">
-          <label for="duration">Estimated Duration <span class="hint">(optional)</span></label>
-          <input type="text" id="duration" name="duration" placeholder="e.g. 6 weeks" />
-        </div>
-      </fieldset>
-
-      <fieldset class="card">
         <h2 class="card-title">Invoicing</h2>
         <div class="row2">
           <div class="field">
@@ -340,17 +335,13 @@
         <h2 class="card-title">Paperwork</h2>
         <div class="row2">
           <div class="field">
-            <label for="contractNumber">Contract Number</label>
-            <input type="text" id="contractNumber" name="contractNumber" />
-          </div>
-          <div class="field">
             <label for="quickbooksInvoice">QuickBooks Invoice Number</label>
             <input type="text" id="quickbooksInvoice" name="quickbooksInvoice" />
           </div>
-        </div>
-        <div class="field">
-          <label for="procoreNumber">Procore Number</label>
-          <input type="text" id="procoreNumber" name="procoreNumber" />
+          <div class="field">
+            <label for="procoreNumber">Procore Number</label>
+            <input type="text" id="procoreNumber" name="procoreNumber" />
+          </div>
         </div>
         <p class="hint" style="margin:0.4rem 0 1rem;">Mark each document, attach the file (contract and any other documents), and add or remove items as needed.</p>
         <div class="statuslist" id="binderChecks"></div>
@@ -446,7 +437,7 @@
     });
 
     // ---- Required-field validation ----
-    const REQUIRED = ["project", "projectAddress", "contractAmount", "prevailingWage", "builderName", "formOfBilling", "startDate", "endDate"];
+    const REQUIRED = ["project", "projectAddress", "contractAmount", "prevailingWage", "builderName", "estimateNumber", "formOfBilling", "startDate", "duration"];
     function validateRequired() {
       let firstInvalid = null;
       REQUIRED.forEach(id => {
@@ -465,6 +456,30 @@
       el.addEventListener("input", clear);
       el.addEventListener("change", clear);
     });
+
+    // Parse an "Estimated Duration" (e.g. "6 weeks", "3 months", "45 days") and add it to
+    // the start date to produce the estimated end date (YYYY-MM-DD). "" if unparseable.
+    function computeEndDate(startISO, durationText) {
+      if (!startISO) return "";
+      const m = (durationText || "").match(/(\d+(?:\.\d+)?)\s*(day|week|month|year)s?/i);
+      if (!m) return "";
+      const n = parseFloat(m[1]), unit = m[2].toLowerCase();
+      const d = new Date(startISO + "T00:00:00");
+      if (isNaN(d.getTime())) return "";
+      if (unit === "day") d.setDate(d.getDate() + Math.round(n));
+      else if (unit === "week") d.setDate(d.getDate() + Math.round(n * 7));
+      else if (unit === "month") d.setMonth(d.getMonth() + Math.round(n));
+      else if (unit === "year") d.setFullYear(d.getFullYear() + Math.round(n));
+      const pad = (x) => String(x).padStart(2, "0");
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    }
+    function updateEndPreview() {
+      document.getElementById("endDatePreview").value =
+        computeEndDate(document.getElementById("startDate").value, document.getElementById("duration").value) || "";
+    }
+    document.getElementById("startDate").addEventListener("change", updateEndPreview);
+    document.getElementById("startDate").addEventListener("input", updateEndPreview);
+    document.getElementById("duration").addEventListener("input", updateEndPreview);
 
     // Read a row's item name from its editable input (custom rows) or stored value.
     function rowItemName(r) {
@@ -511,10 +526,11 @@
         },
         timeSchedule: {
           estimatedStartDate: f.startDate.value,
-          estimatedEndDate: f.endDate.value,
-          estimatedDuration: f.duration.value.trim()
+          estimatedDuration: f.duration.value.trim(),
+          estimatedEndDate: computeEndDate(f.startDate.value, f.duration.value)
         },
         invoicing: {
+          estimateNumber: f.estimateNumber.value.trim(),
           formOfBilling: f.formOfBilling.value,
           billingFrequency: f.billingFrequency.value.trim(),
           paymentTerms: f.paymentTerms.value.trim(),
@@ -522,7 +538,6 @@
         },
         paperwork: {
           contractAmount: f.contractAmount.value.trim(),
-          contractNumber: f.contractNumber.value.trim(),
           quickbooksInvoice: f.quickbooksInvoice.value.trim(),
           procoreNumber: f.procoreNumber.value.trim()
         },
@@ -582,13 +597,13 @@
         "Estimated End Date: " + (d.timeSchedule.estimatedEndDate || "—"),
         "Estimated Duration: " + (d.timeSchedule.estimatedDuration || "—"), "",
         "Invoicing",
+        "Estimate #: " + (inv.estimateNumber || "—"),
         "Form of Billing: " + (inv.formOfBilling || "—"),
         "Billing Frequency: " + (inv.billingFrequency || "—"),
         "Payment Terms: " + (inv.paymentTerms || "—"),
         "Schedule for Billing: " + (inv.schedule || "—"), "",
         "Paperwork",
         "Contract Amount: " + (pw.contractAmount ? "$" + pw.contractAmount : "—"),
-        "Contract Number: " + (pw.contractNumber || "—"),
         "QuickBooks Invoice Number: " + (pw.quickbooksInvoice || "—"),
         "Procore Number: " + (pw.procoreNumber || "—"),
         statusList(d.officeBinderNeeds), "",
