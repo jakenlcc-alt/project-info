@@ -10,7 +10,10 @@ project fields that a **Supabase-backed Dashboard** reads. Installable **PWA**.
 
 ## Repo / deploy
 - **GitHub repo:** `jakenlcc-alt/project-info`
-- **Deploy:** Netlify, auto-deploys from **`main`** on push. Live: https://nlc2projectinfo.netlify.app/
+- **Deploy:** Netlify → https://nlc2projectinfo.netlify.app/. The live site builds the
+  **`claude/upbeat-mayer-uvzvne`** branch (Netlify config shows `main`, but the deploy history
+  builds the claude branch). **Push every change to BOTH `main` and `claude/upbeat-mayer-uvzvne`**
+  — keep them identical, or the site goes stale (this already happened once).
 - **App is ONE file:** `index.html` (self-contained inline CSS/JS, no build step) + PWA assets
   (`manifest.webmanifest`, `icon.svg`, `icon-192.png`, `icon-512.png`, `favicon-32.png`,
   `apple-touch-icon.png`).
@@ -37,6 +40,8 @@ project fields that a **Supabase-backed Dashboard** reads. Installable **PWA**.
    Contract Amount in Required Info.)*
 6. **Other – Binders:** Safety Plan Binder (toggle + upload).
 7. **Hand-off Meeting:** Who, Date.
+8. **Saved Kickoffs** (bottom of page): list of submitted forms. **Open** reloads one into the
+   form to edit + re-submit, **Delete** removes it, **Start new kickoff** clears the form.
 
 Buttons: **Submit** + **Preview data** (dumps collected JSON).
 
@@ -50,6 +55,14 @@ invoicing:  { estimateNumber, formOfBilling, billingFrequency, paymentTerms, sch
 paperwork:  { contractAmount, quickbooksInvoice, procoreNumber }
 officeBinderNeeds:[{item,status,files[]}], otherBinders:[…], handoffMeeting:{who,date}, submittedAt
 ```
+
+## Saved kickoffs (local, on-device)
+Submit also saves the whole form to the browser (`localStorage`, key `kickoffSubmissions`) and
+lists it in the bottom **Saved Kickoffs** section. Storage/repopulate layer: `saveCurrent()`,
+`loadAllSaved()`, `persistAll()`, `applyData()` (reverse of `collect()`), `restoreStatus()`.
+On-device only (per browser); uploaded files are not restored. **To make it shared/multi-device:**
+swap `loadAllSaved`/`persistAll` (make them async) to read/write a Supabase `submissions` table —
+the UI and `applyData()` stay the same. Needs the Supabase URL + anon key.
 
 ## monday + Supabase flow (on Submit, in `index.html`)
 - `SUBMIT_URL = https://monday-token-keeper.jake-nlcc.workers.dev` — generic monday GraphQL proxy
