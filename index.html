@@ -137,6 +137,15 @@
     .field.invalid > input, .field.invalid > select { border-color: var(--red); background: #fff6f6; }
     .field.invalid .req-error { display: block; }
     #status.err { color: var(--red-ink); font-weight: 600; }
+
+    /* Saved kickoffs list */
+    .saved-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+    .saved-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding: 0.6rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd; margin-bottom: 0.6rem; }
+    .saved-row:last-child { margin-bottom: 0; }
+    .saved-title { font-weight: 600; }
+    .saved-date { font-size: 0.8rem; color: var(--muted); }
+    .saved-actions { display: flex; gap: 0.4rem; flex: none; }
+    .saved-empty { color: var(--muted); font-size: 0.9rem; }
   </style>
 </head>
 <body>
@@ -370,6 +379,15 @@
       </div>
       <pre id="output"></pre>
     </form>
+
+    <section class="card" id="savedSection">
+      <h2 class="card-title">Saved Kickoffs</h2>
+      <div class="saved-head">
+        <p class="hint" style="margin:0;">Submitted forms are saved here — click <strong>Open</strong> to load one back in, edit, and re-submit.</p>
+        <button type="button" class="action secondary" id="newKickoff">Start new kickoff</button>
+      </div>
+      <div id="savedList"></div>
+    </section>
   </div>
 
   <script>
@@ -769,6 +787,10 @@
 
       const data = collect();
 
+      // Save locally so this kickoff can be reopened and edited later.
+      saveCurrent(data);
+      renderSaved();
+
       if (!SUBMIT_URL || !TEMPLATE_BOARD_ID) {
         out.style.display = "block";
         out.textContent = JSON.stringify(data, null, 2);
@@ -816,6 +838,116 @@
         out.textContent = JSON.stringify(data, null, 2);
       }
     });
+
+    // ---- Save / access submitted kickoffs (stored on this device) ----
+    const SAVE_KEY = "kickoffSubmissions";
+    let currentEditId = null;
+    const BASE_ITEMS = { binder: BINDER_ITEMS, other: OTHER_ITEMS };
+
+    function loadAllSaved() { try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || []; } catch (e) { return []; } }
+    function persistAll(arr) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(arr)); } catch (e) {} }
+
+    // Save the current form as a record; updates the open record, else adds a new one.
+    function saveCurrent(data) {
+      const all = loadAllSaved();
+      const id = currentEditId || (String(Date.now()) + "-" + Math.floor(Math.random() * 100000));
+      const rec = { id: id, savedAt: new Date().toISOString(), label: (data.overview.project || "Untitled kickoff"), data: data };
+      const i = all.findIndex(function (x) { return x.id === id; });
+      if (i >= 0) all[i] = rec; else all.unshift(rec);
+      persistAll(all);
+      currentEditId = id;
+      return id;
+    }
+
+    function fmtDate(iso) { try { return new Date(iso).toLocaleString(); } catch (e) { return iso; } }
+
+    function renderSaved() {
+      const el = document.getElementById("savedList");
+      const all = loadAllSaved();
+      if (!all.length) { el.innerHTML = '<div class="saved-empty">No saved kickoffs yet — submit a form and it will appear here.</div>'; return; }
+      el.innerHTML = all.map(function (r) {
+        const label = (r.label || "Untitled").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        return '<div class="saved-row" data-id="' + r.id + '">' +
+            '<div class="saved-meta">' +
+              '<div class="saved-title">' + label + '</div>' +
+              '<div class="saved-date">Saved ' + fmtDate(r.savedAt) + '</div>' +
+            '</div>' +
+            '<div class="saved-actions">' +
+              '<button type="button" class="status-btn done act-open">Open</button>' +
+              '<button type="button" class="status-btn not act-del">Delete</button>' +
+            '</div>' +
+          '</div>';
+      }).join("");
+    }
+
+    document.getElementById("savedList").addEventListener("click", function (e) {
+      const row = e.target.closest(".saved-row"); if (!row) return;
+      const id = row.dataset.id;
+      if (e.target.closest(".act-open")) {
+        const rec = loadAllSaved().find(function (x) { return x.id === id; });
+        if (rec) {
+          applyData(rec.data);
+          currentEditId = id;
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          const s = document.getElementById("status");
+          s.className = "";
+          s.textContent = 'Editing "' + (rec.label || "") + '" — make changes and Submit to update.';
+        }
+      } else if (e.target.closest(".act-del")) {
+        persistAll(loadAllSaved().filter(function (x) { return x.id !== id; }));
+        if (currentEditId === id) currentEditId = null;
+        renderSaved();
+      }
+    });
+
+    document.getElementById("newKickoff").addEventListener("click", function () {
+      document.getElementById("kickoff").reset();
+      currentEditId = null;
+      document.getElementById("binderChecks").innerHTML = BINDER_ITEMS.map(function (it) { return statusRowHTML(it, "binder", { removable: true }); }).join("");
+      document.getElementById("otherChecks").innerHTML = OTHER_ITEMS.map(function (it) { return statusRowHTML(it, "other", {}); }).join("");
+      updateEndPreview();
+      document.querySelectorAll(".field.invalid").forEach(function (f) { f.classList.remove("invalid"); });
+      const s = document.getElementById("status"); s.className = ""; s.textContent = "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = (v == null ? "" : v); }
+
+    // Rebuild a status list from saved data and re-apply Completed/Not Complete states.
+    function restoreStatus(containerId, group, items, editable) {
+      const el = document.getElementById(containerId);
+      el.innerHTML = items.map(function (x) {
+        return statusRowHTML(x.item, group, { removable: editable, custom: editable && BASE_ITEMS[group].indexOf(x.item) === -1 });
+      }).join("");
+      [].slice.call(el.querySelectorAll(".status-row")).forEach(function (r, i) {
+        const st = items[i].status;
+        if (st) { const btn = r.querySelector(st === "completed" ? ".status-btn.done" : ".status-btn.not"); if (btn) { btn.classList.add("active"); r.dataset.status = st; } }
+      });
+    }
+
+    // Populate every field from a saved record (reverse of collect()). Files aren't restored.
+    function applyData(d) {
+      const c = d.contacts || {}, o = d.overview || {}, t = d.timeSchedule || {}, inv = d.invoicing || {}, pw = d.paperwork || {}, hm = d.handoffMeeting || {};
+      const bld = c.builder || {}, su = c.superintendent || {}, pm = c.projectManager || {}, ac = c.accounting || {};
+      setVal("project", o.project); setVal("projectAddress", o.projectAddress); setVal("projectId", o.projectId); setVal("prevailingWage", o.prevailingWage);
+      setVal("contractAmount", pw.contractAmount);
+      setVal("builderName", bld.name); setVal("builderPhone", bld.phone); setVal("builderEmail", bld.email);
+      setVal("estimateNumber", inv.estimateNumber); setVal("formOfBilling", inv.formOfBilling);
+      setVal("startDate", t.estimatedStartDate); setVal("duration", t.estimatedDuration);
+      setVal("companyAddress", c.companyAddress);
+      setVal("superName", su.name); setVal("superPhone", su.phone); setVal("superEmail", su.email); setVal("superAvail", su.availability);
+      setVal("pmName", pm.name); setVal("pmPhone", pm.phone); setVal("pmEmail", pm.email); setVal("pmAvail", pm.availability);
+      setVal("acctName", ac.name); setVal("acctPhone", ac.phone); setVal("acctEmail", ac.email); setVal("acctAvail", ac.availability);
+      setVal("billingFrequency", inv.billingFrequency); setVal("paymentTerms", inv.paymentTerms); setVal("billingSchedule", inv.schedule);
+      setVal("quickbooksInvoice", pw.quickbooksInvoice); setVal("procoreNumber", pw.procoreNumber);
+      setVal("handoffWho", hm.who); setVal("handoffDate", hm.date);
+      restoreStatus("binderChecks", "binder", d.officeBinderNeeds || [], true);
+      restoreStatus("otherChecks", "other", d.otherBinders || [], false);
+      updateEndPreview();
+      document.querySelectorAll(".field.invalid").forEach(function (f) { f.classList.remove("invalid"); });
+    }
+
+    renderSaved();
   </script>
 </body>
 </html>
